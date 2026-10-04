@@ -32,7 +32,7 @@ function board(top, dest, when) {
 }
 const IDLE = [
   () => ['yaqzan\'s network', 'pick a stop', ''],
-  () => ['every line starts at', 'aiub', ''],
+  () => ['6 lines', 'all running', ''],
   () => { const s = randomStop(); return [`next: ${DATA.lines[s.lines[0]].name}`, s.name, `${1 + Math.floor(Math.random() * 6)} min`]; },
   () => { const s = randomStop(); return [`next: ${DATA.lines[s.lines[0]].name}`, s.name, `${1 + Math.floor(Math.random() * 6)} min`]; },
 ];
@@ -196,9 +196,8 @@ function openStation(sid) {
 
 function openLine(id) {
   const ln = DATA.lines[id];
-  const stops = ln.stations.filter(s => s !== 'aiub');
-  show(`${ln.name} line`, `${stops.length} stops from aiub`, [id], 'pick a stop and a train takes you there.',
-    stops.map(s => goButton(s, id)).join(''));
+  show(`${ln.name} line`, `${ln.stations.length} stops`, [id], 'pick a stop and a train takes you there.',
+    ln.stations.map(s => goButton(s, id)).join(''));
 }
 
 function closeCard() {
