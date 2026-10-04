@@ -127,6 +127,8 @@ button { font: inherit; color: inherit; }
   .platform { position: relative; }
   .wall { position: relative; inset: auto; margin-top: 44px; grid-template-columns: 1fr; padding: 40px 16px 30px; }
   .wall::before { display: none; }
+  .side { display: contents; }          /* board first, then the map, then the rest */
+  .hang { order: 1; margin-top: 0; } .poster-wrap { order: 2; } .plate { order: 3; } .howto { order: 4; } .exits { order: 5; }
   .poster-wrap { height: auto; }
   .poster { max-width: none; }
   #scroller { overflow-x: auto; scrollbar-width: thin; }
