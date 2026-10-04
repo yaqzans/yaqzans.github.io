@@ -12,20 +12,22 @@ let busyUntil = 0;      // the board stays on a ride message until then
 function clock() {
   const d = new Date();
   const s = d.getSeconds(), m = d.getMinutes() + s / 60, h = (d.getHours() % 12) + m / 60;
-  $('#ch').setAttribute('transform', `rotate(${h * 30})`);
-  $('#cm').setAttribute('transform', `rotate(${m * 6})`);
-  $('#cs').setAttribute('transform', `rotate(${s * 6})`);
+  document.querySelectorAll('.ch').forEach(n => n.setAttribute('transform', `rotate(${h * 30})`));
+  document.querySelectorAll('.cm').forEach(n => n.setAttribute('transform', `rotate(${m * 6})`));
+  document.querySelectorAll('.cs').forEach(n => n.setAttribute('transform', `rotate(${s * 6})`));
 }
 clock();
 setInterval(clock, 1000);
 
 // ---------- departures board ----------
 function board(top, dest, when) {
-  [['#led1', top], ['#led2', dest], ['#led3', when]].forEach(([id, text]) => {
-    const el = $(id);
-    if (el.textContent === text) return;
-    el.textContent = text;
-    el.closest('.led').classList.remove('flip'); void el.offsetWidth; el.closest('.led').classList.add('flip');
+  [['.led1', top], ['.led2', dest], ['.led3', when]].forEach(([cls, text]) => {
+    document.querySelectorAll(cls).forEach(el => {
+      if (el.textContent === text) return;
+      el.textContent = text;
+      const row = el.closest('.led');
+      row.classList.remove('flip'); void row.offsetWidth; row.classList.add('flip');
+    });
   });
 }
 const IDLE = [
@@ -112,7 +114,7 @@ let prev = performance.now();
 function frame(now) {
   const dt = Math.min((now - prev) / 1000, .05);
   prev = now;
-  for (const t of trains) { step(t, dt); place(t); }
+  if (map.getClientRects().length) for (const t of trains) { step(t, dt); place(t); }  // laptop version only
   requestAnimationFrame(frame);
 }
 trains.forEach(place);
@@ -225,3 +227,63 @@ document.querySelectorAll('.ldot').forEach(b => b.addEventListener('click', e =>
 
 // ---------- external links open in a new tab ----------
 document.querySelectorAll('.exits a[href^="http"]').forEach(a => { a.target = '_blank'; a.rel = 'noopener'; });
+
+// ---------- phone version: one line at a time, drawn top to bottom ----------
+const route = $('#m-route');
+let mLine = null;
+
+function mShow(lineId) {
+  mLine = lineId;
+  const ln = DATA.lines[lineId];
+  document.querySelectorAll('.m-tab').forEach(b => b.setAttribute('aria-selected', b.dataset.line === lineId));
+  route.style.setProperty('--c', ln.color);
+  route.innerHTML = `<h2><i></i>${esc(ln.name)} line</h2><div class="m-strip"><div class="m-train"></div>${
+    ln.stations.map(sid => {
+      const st = DATA.stations[sid];
+      const links = st.links.map(([label, url]) =>
+        `<a href="${esc(url)}"${url.startsWith('http') ? ' target="_blank" rel="noopener"' : ''}>${esc(label)} ↗</a>`).join('');
+      return `<div class="m-stop${sid === 'aiub' ? ' hub' : ''}" data-id="${esc(sid)}" tabindex="0" role="button">
+        <span class="dot"></span>
+        <div><div class="name">${esc(sid === 'aiub' ? 'AIUB' : st.name)}</div><div class="tag">${esc(st.tag)}</div></div>
+        <div class="more">${esc(st.text)}${links ? `<div class="links">${links}</div>` : ''}</div>
+      </div>`;
+    }).join('')}</div>`;
+  route.querySelectorAll('.m-stop').forEach(n => {
+    n.addEventListener('click', e => { if (!e.target.closest('a')) mRide(n.dataset.id); });
+    n.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); mRide(n.dataset.id); } });
+  });
+  mMoveTrain(route.querySelector('.m-stop'), false);
+  if (route.getClientRects().length) {          // only when the phone version is the one showing
+    board(`${ln.name} line`, 'now boarding', '');
+    busyUntil = Date.now() + 6000;
+  }
+}
+
+function mMoveTrain(stopEl, animate = true) {
+  const train = route.querySelector('.m-train');
+  const dot = stopEl.querySelector('.dot');
+  const y = stopEl.offsetTop + dot.offsetTop + dot.offsetHeight / 2 - 15;
+  if (!animate) train.style.transition = 'none';
+  train.style.transform = `translateY(${y}px)`;
+  if (!animate) { void train.offsetWidth; train.style.transition = ''; }
+}
+
+function mRide(sid) {
+  const el = route.querySelector(`.m-stop[data-id="${sid}"]`);
+  const wasOpen = el.classList.contains('open');
+  route.querySelectorAll('.m-stop.open').forEach(n => n.classList.remove('open'));
+  if (wasOpen) return;
+  const st = DATA.stations[sid];
+  board(`${DATA.lines[mLine].name} line to`, st.name, 'due');
+  busyUntil = Date.now() + 8000;
+  mMoveTrain(el);
+  setTimeout(() => {
+    el.classList.add('open');
+    board('arrived at', st.name, 'now');
+    mMoveTrain(el, false);   // the stop grew, keep the train on its dot
+  }, calm ? 0 : 900);
+}
+
+document.querySelectorAll('.m-tab').forEach(b => b.addEventListener('click', () => mShow(b.dataset.line)));
+document.querySelectorAll('.m-exits a[href^="http"]').forEach(a => { a.target = '_blank'; a.rel = 'noopener'; });
+mShow(Object.keys(DATA.lines)[0]);

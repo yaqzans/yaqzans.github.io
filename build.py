@@ -59,11 +59,11 @@ S = {
                 "Development of a Simulated Blood-Like Solution for Medical Experiments. analytical chemistry "
                 "letters, 2025. first shown at the international conference on physics 2024. fifth author.",
                 [("read the paper", "https://doi.org/10.1080/22297928.2025.2533331")]),
-    "agile": st("agile + waterfall", "ieom bangladesh 2025", 300, 310, "b",
+    "agile": st("agile + waterfall", "ieom bangladesh 2025", 280, 310, "b",
                 "Evaluating the Performance of Agile-Waterfall Integrated Approaches in Large Scale Engineering "
                 "Projects in Bangladesh. ieom bangladesh 2025. fifth author.",
                 [("read the paper", "https://doi.org/10.46254/BA08.20250467")]),
-    "hybrid": st("human-ai animation", "icctass 2025", 200, 210, "r",
+    "hybrid": st("human-ai animation", "icctass 2025", 180, 210, "r",
                  "A Hybrid Human-AI Model for Sustainable Innovation in Media and Animation. presented at icctass "
                  "2025. third author."),
 
@@ -163,7 +163,7 @@ def label(sid):
     nx, ny, anchor = {"r": (x + 16, y + 1, "start"), "l": (x - 16, y + 1, "end"),
                       "t": (x, y - 36, "middle"), "b": (x, y + 30, "middle")}[side]
     return (f'<text x="{nx}" y="{ny}" text-anchor="{anchor}" class="lbl">{esc(s["name"])}</text>'
-            f'<text x="{nx}" y="{ny + 18}" text-anchor="{anchor}" class="tag">{esc(s["tag"])}</text>')
+            f'<text x="{nx}" y="{ny + 19}" text-anchor="{anchor}" class="tag">{esc(s["tag"])}</text>')
 
 
 def arrow(a, b, color):
@@ -213,13 +213,13 @@ def view():
         xs += [cx - w / 2, cx + w / 2]
         ys += [cy - 14, cy + 14]
     x0, x1 = min(xs) - 40, max(xs) + 40
-    y0, y1 = min(ys) - 70, max(ys) + 110   # room for labels above and below
+    y0, y1 = min(ys) - 62, max(ys) + 96    # room for labels above and below
     return (round(x0), round(y0), round(x1 - x0), round(y1 - y0))
 
 
 def map_svg(interactive=True):
-    style = (f"<style>.lbl{{font:500 17px {FONT};fill:{INK}}}.hubname{{font-weight:700;font-size:20px;letter-spacing:1px}}"
-             f".tag{{font:400 13.5px {FONT};fill:{SOFT}}}"
+    style = (f"<style>.lbl{{font:500 18.5px {FONT};fill:{INK}}}.hubname{{font-weight:700;font-size:20px;letter-spacing:1px}}"
+             f".tag{{font:400 14.5px {FONT};fill:{SOFT}}}"
              f".lbl,.tag{{paint-order:stroke;stroke:{PAPER};stroke-width:5px;stroke-linejoin:round}}</style>")
     o = [style, f'<rect x="-200" y="-200" width="{W + 400}" height="{H + 400}" fill="{PAPER}"/>']
     o += [f'<rect x="{s["x"] - 76}" y="{s["y"] - 46}" width="152" height="150" rx="12" fill="{ZONE}"/>'
@@ -257,10 +257,17 @@ def clock_svg():
             f'<text y="-45" text-anchor="middle" font-family="{FONT}" font-size="7.5" font-weight="700" fill="#fff" '
             f'letter-spacing="1.5">YAQZAN</text>'
             f'<circle r="42" fill="#0b0b0b" stroke="#262626" stroke-width="2"/>{ticks}'
-            f'<line id="ch" y2="-21" stroke="#fff" stroke-width="3.5" stroke-linecap="round"/>'
-            f'<line id="cm" y2="-32" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>'
-            f'<line id="cs" y1="6" y2="-34" stroke="#dc241f" stroke-width="1.2"/>'
+            f'<line class="ch" y2="-21" stroke="#fff" stroke-width="3.5" stroke-linecap="round"/>'
+            f'<line class="cm" y2="-32" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>'
+            f'<line class="cs" y1="6" y2="-34" stroke="#dc241f" stroke-width="1.2"/>'
             f'<circle r="2.5" fill="#dc241f"/></svg>')
+
+
+def board_html():
+    return ('<div class="board" aria-live="polite"><div class="screen">'
+            '<div class="led"><span class="led1">yaqzan\'s network</span></div>'
+            '<div class="led row"><span class="led2">pick a stop</span><span class="led3"></span></div>'
+            '</div></div>')
 
 
 def roundel(size=44):
@@ -278,6 +285,8 @@ def stamp(path):
 def page():
     legend = "".join(f'<button class="ldot" data-line="{lid}" style="--c:{c}"><i></i>{esc(n)}</button>'
                      for lid, (n, c, _) in L.items())
+    m_tabs = "".join(f'<button class="m-tab" role="tab" data-line="{lid}" style="--c:{c}"><i></i><b>{esc(n)}</b>'
+                     f'<span>{len(stops) - 1} stops</span></button>' for lid, (n, c, stops) in L.items())
     vx, vy, vw, vh = view()
     return f"""<!doctype html>
 <html lang="en">
@@ -293,16 +302,14 @@ def page():
 </head>
 <body>
 
+<div class="d">
 <div class="ceiling"><i></i><i></i></div>
 
 <div class="wall">
   <aside class="side">
     <div class="hang">
       {clock_svg()}
-      <div class="board" aria-live="polite"><div class="screen">
-        <div class="led" id="led1">yaqzan's network</div>
-        <div class="led row"><span id="led2">pick a stop</span><span id="led3"></span></div>
-      </div></div>
+      {board_html()}
     </div>
 
     <div class="plate">
@@ -360,6 +367,29 @@ def page():
   <p class="card-text"></p>
   <div class="card-links"></div>
 </aside>
+</div>
+
+<!-- phone version: a line strip map, like the one above the doors in a train -->
+<div class="m">
+  <div class="m-ceiling"></div>
+  <div class="m-hang">{clock_svg()}{board_html()}</div>
+  <header class="m-plate">
+    {roundel(34)}
+    <div><b>yaqzan's</b><span>projects, papers and the rest</span></div>
+  </header>
+  <p class="m-intro">every line starts at <b>aiub</b>. pick a line, then tap a stop.</p>
+  <nav class="m-tabs" role="tablist">{m_tabs}</nav>
+  <section class="m-route" id="m-route" aria-live="polite"></section>
+  <nav class="m-exits" aria-label="links">
+    <a href="https://github.com/yaqzans"><i>&uarr;</i>github</a>
+    <a href="https://www.linkedin.com/in/shamvi-md-abdullah-b42a321a6/"><i>&uarr;</i>linkedin</a>
+    <a href="https://scholar.google.com/citations?user=DwskOfEAAAAJ&hl=en"><i>&uarr;</i>scholar</a>
+    <a href="https://orcid.org/0009-0005-9717-9426"><i>&uarr;</i>orcid</a>
+    <a href="mailto:shamvi.abdullah@gmail.com"><i>&uarr;</i>email</a>
+    <a href="ShamviMdAbdullah.pdf"><i>&uarr;</i>cv</a>
+  </nav>
+  <div class="m-platform"></div>
+</div>
 
 <script id="data" type="application/json">{data_json()}</script>
 <script src="app.js?v={stamp('app.js')}"></script>
@@ -389,7 +419,7 @@ def teaser():
                       f'<animateMotion path="{d}" dur="{dur * 2:.1f}s" begin="-{i * 2.3:.1f}s" repeatCount="indefinite" '
                       f'rotate="auto" keyPoints="0;1;0" keyTimes="0;.5;1" calcMode="linear"/></rect>')
     body = map_svg(interactive=False).replace('<g id="trains"></g>', "".join(trains))
-    body = body.replace(".lbl{font:500 17px", ".lbl{font:600 19px").replace(".tag{font:400 13.5px", ".tag{font:400 14.5px")
+    body = body.replace(".lbl{font:500 18.5px", ".lbl{font:600 19.5px")
     led = "#ffb238"
     legend = "".join(f'<g transform="translate({28 + i * 200} {84 + mh + 31:.0f})"><rect width="30" height="7" y="-8" fill="{c}"/>'
                      f'<text x="40" y="0" font-family="{FONT}" font-size="18" fill="{INK}">{esc(n)}</text></g>'
