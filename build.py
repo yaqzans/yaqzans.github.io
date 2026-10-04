@@ -79,7 +79,7 @@ S = {
     "prod": st("Productivity Manager", "C# + MS SQL", 1240, 860, "b",
                "Notes, reminders and a timer in one C# desktop app, with logins and an MS SQL database underneath.",
                [("Repo", "https://github.com/yaqzans/Productivity-Manager")]),
-    "sarcasm": st("Sarcasm Detection", "Bag of Words vs TF-IDF", 300, 120, "b",
+    "sarcasm": st("Sarcasm Detection", "Bag of Words vs TF-IDF", 980, 620, "t",
                   "Can a classifier tell when a tweet is sarcastic? Bag of Words against TF-IDF across four "
                   "classifiers, in R.", [("Repo", "https://github.com/yaqzans/ids-sarcasm-detection")]),
 
@@ -113,21 +113,20 @@ S = {
 L = {
     "py":     ("Python", "#6b7d2a", ["oshud", "medease", "vehicle", "hand", "who", "md", (1620, 640)]),
     "js":     ("JavaScript", "#d6a21e", ["ttt", "who", "pm25", "survey", (1380, 1010)]),
-    "cpp":    ("C++", "#7a3f22", ["parking", (1600, 100), (1150, 100), "hand", (1060, 470), (1060, 700), "pm25"]),
+    "cpp":    ("C++", "#7a3f22", ["parking", (1600, 100), (1150, 100), "hand", (1135, 545), (1135, 700), "pm25"]),
     "sql":    ("SQL", "#2f7f8f", ["prod", "survey", (1500, 860)]),
-    "r":      ("R", "#8a5a83", [(130, 120), "sarcasm", (440, 120)]),
+    "r":      ("R", "#8a5a83", [(80, 520), (700, 520), (800, 620), "sarcasm"]),
     "papers": ("Papers", "#233a6b", ["blood", "agile", "hybrid", "hand", (920, 200)]),
     "out":    ("Out & About", "#e8731c", ["poster", "english", "embassy", "undp", (60, 860)]),
 }
 
 # fields are pieces of land with water between them; lines cross the water on bridges
 REGIONS = [  # name, x0, y0, x1, y1, corner for the district name
-    ("Data", 70, 40, 560, 210, "tr"),
     ("Natural Language", 70, 250, 560, 430, "tl"),
     ("Vision & Robotics", 640, 40, 1080, 430, "tl"),
     ("Web & Games", 1160, 40, 1660, 430, "tl"),
     ("Community", 30, 540, 560, 980, "bl"),
-    ("Research", 640, 540, 1080, 980, "tr"),
+    ("Research", 640, 540, 1080, 980, "br"),
     ("Tools", 1160, 540, 1660, 980, "bl"),
 ]
 WATER = "#bfd0cc"
@@ -400,11 +399,12 @@ TINTS = ["#e8e0cc", "#e2e3cf", "#e6dccf", "#dfe2d6", "#e8ddc8", "#e1ddd2", "#e5e
 def zones():
     """Plain paper. Each area is a faint tint with soft, uneven edges and its name in a corner."""
     o = [f'<rect x="-600" y="-600" width="{W + 1600}" height="{H + 1600}" fill="{BG}"/>']
-    for i, (name, x0, y0, x1, y1, corner) in enumerate(REGIONS):
-        c = min(x1 - x0, y1 - y0) * .3
-        outline = [(x0 + c, y0), (x1 - c, y0), (x1, y0 + c), (x1, y1 - c), (x1 - c, y1), (x0 + c, y1), (x0, y1 - c), (x0, y0 + c)]
-        d = smooth(wobble(outline, 12, 2 + i * 1.9, step=80))
-        o.append(f'<path d="{d}" fill="{TINTS[i % len(TINTS)]}"/>')
+    if os.environ.get("AREAS", "names") == "outline":
+        for i, (name, x0, y0, x1, y1, corner) in enumerate(REGIONS):
+            c = min(x1 - x0, y1 - y0) * .3
+            outline = [(x0 + c, y0), (x1 - c, y0), (x1, y0 + c), (x1, y1 - c), (x1 - c, y1), (x0 + c, y1), (x0, y1 - c), (x0, y0 + c)]
+            d = smooth(wobble(outline, 10, 2 + i * 1.9, step=80))
+            o.append(f'<path d="{d}" fill="none" stroke="#9c8a68" stroke-width="2" stroke-dasharray="14 8" opacity=".55"/>')
     for name, x0, y0, x1, y1, corner in REGIONS:
         x, anchor = (x0 + 26, "start") if corner[1] == "l" else (x1 - 26, "end")
         y = y0 + 40 if corner[0] == "t" else y1 - 18
@@ -425,11 +425,12 @@ def map_svg(interactive=True):
              f".lbl,.tag{{paint-order:stroke;stroke:{BG};stroke-width:6px;stroke-linejoin:round}}"
              f".year{{font:800 62px {FONT};fill:#e2ded5;letter-spacing:2px}}"
              f".now{{font:700 18px {FONT};fill:{NOWC};letter-spacing:4px}}"
-             f".district{{font:800 25px {FONT};fill:#a8946e;letter-spacing:6px}}</style>")
+             f".district{{font:900 30px {FONT};fill:#8a7756;letter-spacing:8px}}</style>")
     defs = ('<defs><pattern id="future" width="14" height="14" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">'
             f'<rect width="1.5" height="14" fill="{INK}" opacity=".07"/></pattern></defs>')
     o = [style, defs, zones(), bridges()]
     for lid, (name, color, _) in L.items():
+        o.append(f'<path d="{rounded(line_points(lid))}" fill="none" stroke="{BG}" stroke-width="{LW + 8}" stroke-linejoin="round"/>')
         o.append(f'<path id="L-{lid}" class="line" data-line="{lid}" d="{rounded(line_points(lid))}" fill="none" '
                  f'stroke="{color}" stroke-width="{LW}" stroke-linejoin="round"/>')
         o.append(f'<g class="cap" data-line="{lid}">{arrow(lid)}</g>')
@@ -494,7 +495,7 @@ def page():
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Yaqzan's</title>
+<title>Shamvi's</title>
 <meta name="description" content="Projects, papers and the rest, drawn as a metro map. Pick a stop and a train takes you there.">
 <link rel="stylesheet" href="style.css?v={stamp('style.css')}">
 </head>
@@ -502,7 +503,7 @@ def page():
 
 <div class="d">
   <aside class="column">
-    <h1>Yaqzan’s</h1>
+    <h1>Shamvi’s</h1>
     <div class="stripes">{stripes()}</div>
     <p class="key">{KEY} <span class="do-click">Click</span><span class="do-tap">Tap</span> a stop to visit it.</p>
     <nav class="legend" aria-label="Lines">{legend}</nav>
@@ -568,7 +569,7 @@ def teaser():
 <g clip-path="url(#r)">
   <rect width="{TW}" height="{TH}" fill="{BG}"/>
   <rect width="{TW}" height="{band}" fill="#111"/>
-  <text x="44" y="84" font-family="{FONT}" font-size="64" font-weight="800" fill="#fff" letter-spacing="-2">Yaqzan’s</text>
+  <text x="44" y="84" font-family="{FONT}" font-size="64" font-weight="800" fill="#fff" letter-spacing="-2">Shamvi’s</text>
   <text x="{TW - 44}" y="72" text-anchor="end" font-family="{FONT}" font-size="22" font-weight="700" fill="#e8731c">A map of everything I’ve made</text>
   <text x="{TW - 44}" y="98" text-anchor="end" font-family="{FONT}" font-size="17" fill="#bdb3a2">Stops are projects and papers. Lines are the languages behind them.</text>
   {bars}
@@ -605,6 +606,6 @@ if __name__ == "__main__":
         write(os.path.join(prof, name), svg)
         write(os.path.join(prof, "..", "README.md"),
               f'<a href="https://yaqzans.github.io"><img src="assets/{name}" width="100%" '
-              'alt="Yaqzan&#39;s Metro: projects, papers and everything since 2023 as a metro map, time running left '
-              'to right. Click to ride."></a>\n')
+              'alt="Shamvi&#39;s map: projects and papers drawn as a metro map, lines are the languages behind them. '
+              'Click to ride."></a>\n')
     print(f"{len(S)} stations, {len(L)} lines")
