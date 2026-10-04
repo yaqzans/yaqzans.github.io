@@ -1,225 +1,274 @@
-// yaqzan's room. no build step, no libraries.
+// yaqzan's metro. the map itself is drawn by build.py, this file makes it run.
 
 const $ = (s, el = document) => el.querySelector(s);
-const stage = $('#stage');
+const NS = 'http://www.w3.org/2000/svg';
+const DATA = JSON.parse($('#data').textContent);
+const map = $('#map');
 const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-// ---------- camcorder clock: today's date, but it's always 1998 ----------
-const MONTHS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+let speed = 1;          // 0 paused, 1 play, 3 fast forward
+let pending = null;     // the station whose card should open when its train arrives
+let riders = 0;
+try { riders = +localStorage.getItem('riders') || 0; } catch (e) {}
+
+// ---------- clock + day, top right ----------
+const ticks = $('.clock .ticks');
+for (let i = 0; i < 12; i++) {
+  const a = i * Math.PI / 6, l = document.createElementNS(NS, 'line');
+  l.setAttribute('x1', 21 * Math.sin(a)); l.setAttribute('y1', -21 * Math.cos(a));
+  l.setAttribute('x2', 24 * Math.sin(a)); l.setAttribute('y2', -24 * Math.cos(a));
+  ticks.append(l);
+}
 function clock() {
   const d = new Date();
-  const h = d.getHours() % 12 || 12;
-  const pad = n => String(n).padStart(2, '0');
-  const t = `${h}:${pad(d.getMinutes())}:${pad(d.getSeconds())} ${d.getHours() < 12 ? 'AM' : 'PM'}`;
-  $('#date').textContent = `${MONTHS[d.getMonth()]}. ${pad(d.getDate())} 1998`;
-  $('#time').textContent = t;
-  $('#guide-time').textContent = t;
+  $('#dayname').textContent = d.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase();
+  $('#hand').setAttribute('transform', `rotate(${((d.getHours() % 12) + d.getMinutes() / 60) * 30})`);
 }
 clock();
-setInterval(clock, 1000);
-$('#news-date').textContent = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long' }).toLowerCase() + ', 1998';
+setInterval(clock, 20000);
+const counter = $('#count');
+const showRiders = () => { counter.textContent = riders; };
+showRiders();
 
-// ---------- the logo on the tv ----------
-// screen is x 426..576, y 236..354 in room units; logo is 50 x 22 drawn at 1.4x
-const SCREEN = { x0: 426, y0: 236, x1: 576, y1: 354 };
-const LOGO = { w: 70, h: 31 };
-const COLORS = ['#ff3b3b', '#3bff6f', '#3b8bff', '#ffe03b', '#ff3bd8', '#3bfff2', '#ff8a3b', '#ffffff'];
-const dvd = $('#dvd');
-let x = 470, y = 280, vx = 31, vy = 23, ci = 0, lastX = -1e9, lastY = -1e9, prev = performance.now();
-
-let corners = 0;
-try { corners = +localStorage.getItem('corners') || 0; } catch (e) {}
-function showCorners() { $('#corners').textContent = corners ? `corner hits: ${corners}` : ''; }
-showCorners();
-
-function bounce(now, axis) {
-  ci = (ci + 1 + Math.floor(Math.random() * (COLORS.length - 1))) % COLORS.length;
-  if (axis === 'x') lastX = now; else lastY = now;
-  if (Math.abs(lastX - lastY) < 90) corner();
+// ---------- where every station sits along each line ----------
+const lines = {};
+for (const [id, ln] of Object.entries(DATA.lines)) {
+  const path = $(`#L-${id}`);
+  const total = path.getTotalLength();
+  const samples = [];
+  for (let s = 0; s <= total; s += 2) samples.push([s, path.getPointAtLength(s)]);
+  const at = {};
+  for (const sid of ln.stations) {
+    const st = DATA.stations[sid];
+    let best = 0, bd = Infinity;
+    for (const [s, p] of samples) {
+      const d = (p.x - st.x) ** 2 + (p.y - st.y) ** 2;
+      if (d < bd) { bd = d; best = s; }
+    }
+    at[sid] = best;
+  }
+  lines[id] = { ...ln, id, path, total, at, stops: ln.stations.map(s => at[s]).sort((a, b) => a - b) };
 }
 
-function corner() {
-  lastX = lastY = -1e9;  // one corner, one count
-  corners++;
-  try { localStorage.setItem('corners', corners); } catch (e) {}
-  showCorners();
-  const big = $('#big');
-  big.innerHTML = 'IT HIT THE CORNER';
-  big.classList.remove('on'); void big.offsetWidth; big.classList.add('on');
-  setTimeout(() => big.classList.remove('on'), 2400);
-  const f = $('#screenflash');
-  f.setAttribute('opacity', '.9');
-  setTimeout(() => f.setAttribute('opacity', '0'), 120);
+// ---------- one train per line, shuttling end to end like the game ----------
+const trainLayer = $('#trains');
+const trains = Object.values(lines).map((ln, i) => {
+  const g = document.createElementNS(NS, 'g');
+  g.setAttribute('class', 'train');
+  g.innerHTML = `<rect x="-19" y="-10" width="38" height="20" rx="3.5" fill="${ln.color}"/>`;
+  trainLayer.append(g);
+  return { ln, g, s: (ln.total * (i * .37 % 1)), dir: i % 2 ? 1 : -1, wait: 0, target: null, then: null };
+});
+
+function place(t) {
+  const p = t.ln.path.getPointAtLength(t.s);
+  const a = t.ln.path.getPointAtLength(Math.max(0, t.s - 3)), b = t.ln.path.getPointAtLength(Math.min(t.ln.total, t.s + 3));
+  const ang = Math.atan2(b.y - a.y, b.x - a.x) * 180 / Math.PI;
+  t.g.setAttribute('transform', `translate(${p.x.toFixed(1)} ${p.y.toFixed(1)}) rotate(${ang.toFixed(1)})`);
 }
 
-function tick(now) {
-  const dt = Math.min((now - prev) / 1000, .05) * (calm ? .4 : 1);
+function stationAt(ln, s) {
+  return ln.stations.find(sid => Math.abs(ln.at[sid] - s) < .5);
+}
+
+function arrive(t, sid) {
+  t.wait = 900;
+  board(sid);
+}
+
+function step(t, dt) {
+  if (t.wait > 0) { t.wait -= dt * 1000; return; }
+  if (t.target != null) {                       // sent somewhere by a click
+    const left = t.target - t.s;
+    const v = Math.max(380, Math.abs(t.dist) / 1.3);
+    const move = Math.sign(left) * Math.min(Math.abs(left), v * dt);
+    t.s += move;
+    if (Math.abs(t.target - t.s) < .5) {
+      t.s = t.target;
+      const sid = t.then;
+      t.target = t.then = null;
+      arrive(t, sid);
+      if (sid === pending) { pending = null; openStation(sid); }
+    }
+    return;
+  }
+  const before = t.s;
+  t.s += t.dir * 70 * dt;
+  const lo = Math.min(before, t.s), hi = Math.max(before, t.s);
+  const hit = t.ln.stops.find(s => s > lo && s <= hi && Math.abs(s - before) > .5);
+  if (hit != null) { t.s = hit; arrive(t, stationAt(t.ln, hit)); }
+  if (t.s <= 0) { t.s = 0; t.dir = 1; }
+  if (t.s >= t.ln.total) { t.s = t.ln.total; t.dir = -1; }
+}
+
+let prev = performance.now();
+function frame(now) {
+  const dt = Math.min((now - prev) / 1000, .05) * speed;
   prev = now;
-  x += vx * dt; y += vy * dt;
-  if (x <= SCREEN.x0) { x = SCREEN.x0; vx = Math.abs(vx); bounce(now, 'x'); }
-  if (x + LOGO.w >= SCREEN.x1) { x = SCREEN.x1 - LOGO.w; vx = -Math.abs(vx); bounce(now, 'x'); }
-  if (y <= SCREEN.y0) { y = SCREEN.y0; vy = Math.abs(vy); bounce(now, 'y'); }
-  if (y + LOGO.h >= SCREEN.y1) { y = SCREEN.y1 - LOGO.h; vy = -Math.abs(vy); bounce(now, 'y'); }
-  dvd.setAttribute('transform', `translate(${x.toFixed(2)} ${y.toFixed(2)}) scale(1.4)`);
-  dvd.style.color = COLORS[ci];
-  requestAnimationFrame(tick);
+  if (dt > 0) for (const t of trains) { step(t, dt); place(t); }
+  requestAnimationFrame(frame);
 }
-requestAnimationFrame(tick);
+trains.forEach(place);
+requestAnimationFrame(frame);
 
-// ---------- tape noise + the tracking band that rolls through now and then ----------
-if (!calm) {
-  const cv = $('#noise'), cx = cv.getContext('2d'), img = cx.createImageData(cv.width, cv.height);
-  setInterval(() => {
-    for (let i = 0; i < img.data.length; i += 4) {
-      const v = Math.random() * 255;
-      img.data[i] = img.data[i + 1] = img.data[i + 2] = v;
-      img.data[i + 3] = 255;
-    }
-    cx.putImageData(img, 0, 0);
-  }, 80);
+// ---------- passengers: little shapes that pile up and get picked up ----------
+const SHAPES = ['circle', 'square', 'triangle', 'pentagon', 'diamond', 'cross', 'star'];
+const pax = Object.fromEntries(Object.keys(DATA.stations).map(s => [s, []]));
+const paxLayer = $('#pax');
 
-  const band = $('#band');
-  (function roll() {
-    band.classList.remove('run'); void band.offsetWidth; band.classList.add('run');
-    setTimeout(roll, 6000 + Math.random() * 9000);
-  })();
-}
-
-function glitch() {
-  if (calm) return;
-  document.body.classList.add('glitch');
-  setTimeout(() => document.body.classList.remove('glitch'), 180);
-}
-
-// ---------- phone held upright: start looking at the tv ----------
-const pan = $('#pan');
-if (pan.scrollWidth > pan.clientWidth) {
-  pan.scrollLeft = (pan.scrollWidth - pan.clientWidth) / 2;
-  $('#hint').textContent = 'swipe to look around';
-  pan.addEventListener('scroll', () => { label.style.display = 'none'; }, { passive: true });
-}
-
-// ---------- hover labels ----------
-const label = $('#label');
-document.querySelectorAll('.obj').forEach(o => {
-  const show = () => {
-    const r = o.getBoundingClientRect(), s = stage.getBoundingClientRect();
-    label.textContent = `[ ${o.dataset.label} ]`;
-    label.style.display = 'block';
-    label.style.left = `${Math.max(4, r.left - s.left + r.width / 2 - label.offsetWidth / 2)}px`;
-    label.style.top = `${Math.max(4, r.top - s.top - label.offsetHeight - 6)}px`;
-  };
-  const hide = () => { label.style.display = 'none'; };
-  o.addEventListener('mouseenter', show);
-  o.addEventListener('focus', show);
-  o.addEventListener('mouseleave', hide);
-  o.addEventListener('blur', hide);
-  o.addEventListener('click', () => open(o.dataset.panel));
-  o.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(o.dataset.panel); } });
-});
-
-// ---------- panels ----------
-let current = null, opener = null;
-function open(name) {
-  const p = $(`#panel-${name}`);
-  if (!p) return;
-  $('#hint').classList.add('gone');
-  opener = document.activeElement;
-  glitch();
-  p.hidden = false;
-  p.classList.remove('in'); void p.offsetWidth; p.classList.add('in');
-  current = p;
-  $('.close', p).focus();
-  if (name === 'tv') loadChannels();
-  if (name === 'phone') beep();
-}
-function close() {
-  if (!current) return;
-  current.hidden = true;
-  current = null;
-  glitch();
-  if (opener) opener.focus();
-}
-document.querySelectorAll('.panel').forEach(p => {
-  p.addEventListener('click', e => { if (e.target === p) close(); });
-  $('.close', p).addEventListener('click', close);
-});
-document.querySelectorAll('.panel a[href^="http"]').forEach(a => { a.target = '_blank'; a.rel = 'noopener'; });
-addEventListener('keydown', e => {
-  if (e.key === 'Escape') close();
-  if (current && current.id === 'panel-phone' && /^[1-5]$/.test(e.key)) {
-    const a = current.querySelectorAll('.keys a')[+e.key - 1];
-    a.classList.add('pressed');
-    setTimeout(() => { a.classList.remove('pressed'); a.click(); }, 150);
-  }
-});
-
-// ---------- answering machine beep ----------
-function beep() {
-  try {
-    const ac = new (window.AudioContext || window.webkitAudioContext)();
-    const o = ac.createOscillator(), g = ac.createGain();
-    o.frequency.value = 1000;
-    g.gain.value = .06;
-    o.connect(g).connect(ac.destination);
-    o.start(ac.currentTime + .5);
-    o.stop(ac.currentTime + .8);
-  } catch (e) {}
-}
-
-// ---------- tv guide: every public repo, straight from github ----------
-const BLURBS = {
-  'oshudbot': 'bangla medicine lookup. 21,714 brands, ask in bangla, english or banglish',
-  'who-should-count-more': 'should educated votes count more? run the election and see',
-  'cvpr-two-stage-vehicle-recognition': 'vehicles on bangladeshi roads. yolo finds them, convnext names them',
-  'ids-sarcasm-detection': 'can a classifier tell when a tweet is being sarcastic',
-  'markdown-converter-app': 'pdf, word, ppt or excel in, clean markdown out. one exe',
-  'TicTacToeInfinity': 'tic-tac-toe but you only get 4 pieces, then you have to move them',
-  '2D-Parking-Game': 'park the car before the timer runs out. opengl',
-  'Bus-Management-System': 'java oop final, built in 28 hours',
-  'Productivity-Manager': 'notes, reminders and a timer in one c# app',
-  'Pink-Calculator': 'a calculator. it is pink',
-  'WT_Fall-25-26': 'web tech coursework',
-  'WT_Fall-25-26_Project': 'web tech course project, php',
-};
-const SKIP = new Set(['yaqzans', 'yaqzans.github.io']);
-let tuned = false;
-
-async function loadChannels() {
-  if (tuned) return;
-  const list = $('#channels');
-  let repos;
-  try {
-    const r = await fetch('https://api.github.com/users/yaqzans/repos?per_page=100&sort=pushed');
-    if (!r.ok) throw new Error(r.status);
-    repos = (await r.json()).filter(x => !x.fork && !x.private && !SKIP.has(x.name));
-  } catch (e) {
-    // github said no (rate limit, offline). fall back to what was public when this was written
-    repos = Object.keys(BLURBS).map(name => ({ name, html_url: `https://github.com/yaqzans/${name}` }));
-  }
-  list.innerHTML = '';
-  repos.forEach((repo, i) => {
-    const li = document.createElement('li');
-    const ch = document.createElement('span');
-    ch.className = 'ch';
-    ch.textContent = `CH ${String(i + 2).padStart(2, '0')}`;
-    const show = document.createElement('span');
-    show.className = 'show';
-    const a = document.createElement('a');
-    a.href = repo.html_url; a.target = '_blank'; a.rel = 'noopener';
-    a.textContent = repo.name.toLowerCase();
-    show.append(a);
-    if (repo.homepage) {
-      const live = document.createElement('a');
-      live.href = repo.homepage; live.target = '_blank'; live.rel = 'noopener';
-      live.className = 'live'; live.textContent = '[ live ]';
-      show.append(live);
-    }
-    const s = document.createElement('small');
-    s.textContent = BLURBS[repo.name] || (repo.description || '').toLowerCase();
-    show.append(s);
-    li.append(ch, show);
-    list.append(li);
+function drawPax(sid) {
+  paxLayer.querySelectorAll(`[data-s="${sid}"]`).forEach(n => n.remove());
+  const st = DATA.stations[sid];
+  const below = st.side === 't';
+  pax[sid].forEach((shape, i) => {
+    const u = document.createElementNS(NS, 'use');
+    u.setAttribute('href', `#sh-${shape}`);
+    u.setAttribute('data-s', sid);
+    u.setAttribute('width', 13); u.setAttribute('height', 13);
+    u.setAttribute('x', st.x + 22 + (i % 4) * 15);
+    u.setAttribute('y', below ? st.y + 18 + Math.floor(i / 4) * 15 : st.y - 32 - Math.floor(i / 4) * 15);
+    u.setAttribute('class', 'p');
+    paxLayer.append(u);
   });
-  tuned = true;
+}
+
+function spawn() {
+  if (speed > 0) {
+    const ids = Object.keys(pax).filter(s => pax[s].length < 6);
+    const sid = ids[Math.floor(Math.random() * ids.length)];
+    if (sid) {
+      const own = DATA.stations[sid].shape;
+      const opts = SHAPES.filter(s => s !== own);
+      pax[sid].push(opts[Math.floor(Math.random() * opts.length)]);
+      drawPax(sid);
+    }
+  }
+  setTimeout(spawn, (calm ? 4000 : 1400) / Math.max(speed, 1));
+}
+spawn();
+
+function board(sid) {
+  if (!sid || !pax[sid].length) return;
+  riders += pax[sid].length;
+  pax[sid] = [];
+  drawPax(sid);
+  showRiders();
+  try { localStorage.setItem('riders', riders); } catch (e) {}
+}
+
+// ---------- clicking a station sends a train ----------
+function cancelTrips() {
+  pending = null;
+  for (const t of trains) if (t.target != null) { t.target = t.then = null; }
+}
+
+function send(sid, lineId) {
+  cancelTrips();
+  const st = DATA.stations[sid];
+  const pool = trains.filter(t => (lineId ? t.ln.id === lineId : st.lines.includes(t.ln.id)));
+  let best = pool[0];
+  for (const t of pool) if (Math.abs(t.s - t.ln.at[sid]) < Math.abs(best.s - best.ln.at[sid])) best = t;
+  document.querySelectorAll('.stn.on').forEach(n => n.classList.remove('on'));
+  $(`.stn[data-id="${sid}"]`).classList.add('on');
+  $('#hint').classList.add('gone');
+  const goal = best.ln.at[sid];
+  if (speed === 0 || Math.abs(best.s - goal) < 1) { openStation(sid); return; }
+  pending = sid;
+  best.wait = 0;
+  best.target = goal;
+  best.dist = goal - best.s;
+  best.then = sid;
+  best.dir = Math.sign(goal - best.s) || 1;
+}
+
+document.querySelectorAll('.stn').forEach(n => {
+  n.addEventListener('click', e => { e.stopPropagation(); send(n.dataset.id); });
+  n.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); send(n.dataset.id); } });
+});
+
+// ---------- the card ----------
+const card = $('#card');
+function esc(s) { return s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
+function light(hex) {
+  const [r, g, b] = [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16));
+  return .299 * r + .587 * g + .114 * b > 170;
+}
+function chips(ids) {
+  return ids.map(l => {
+    const { color, name } = DATA.lines[l];
+    return `<span style="--c:${esc(color)};color:${light(color) ? '#2f2f2f' : '#fff'}">${esc(name)}</span>`;
+  }).join('');
+}
+
+function show(icon, title, lineIds, text, linksHtml) {
+  $('.card-shape use', card).setAttribute('href', icon ? `#sh-${icon}` : '');
+  $('.card-shape', card).style.display = icon ? '' : 'none';
+  $('h2', card).textContent = title;
+  $('.card-lines', card).innerHTML = chips(lineIds);
+  $('.card-text', card).textContent = text;
+  $('.card-links', card).innerHTML = linksHtml;
+  card.hidden = false;
+  card.style.animation = 'none'; void card.offsetWidth; card.style.animation = '';
+  card.querySelectorAll('.go').forEach(b => b.addEventListener('click', () => send(b.dataset.go, b.dataset.line || undefined)));
+}
+
+function goButton(sid, lineId) {
+  const st = DATA.stations[sid];
+  const l = lineId || st.lines[0];
+  return `<button class="go" style="--c:${DATA.lines[l].color}" data-go="${sid}" data-line="${lineId || ''}">${esc(st.name)}</button>`;
+}
+
+function openStation(sid) {
+  const st = DATA.stations[sid];
+  const links = st.links.map(([label, url]) =>
+    `<a href="${esc(url)}"${url.startsWith('http') ? ' target="_blank" rel="noopener"' : ''}>${esc(label)} ↗</a>`).join('');
+  const related = st.related.map(r => goButton(r)).join('');
+  show(st.shape, st.name, st.lines, st.text, links + related);
+}
+
+function openLine(id) {
+  const ln = DATA.lines[id];
+  $('#hint').classList.add('gone');
+  show(null, `${ln.name} line`, [id], `${ln.stations.length} stops. pick one.`, ln.stations.map(s => goButton(s, id)).join(''));
+}
+
+function closeCard() {
+  cancelTrips();
+  card.hidden = true;
+  document.querySelectorAll('.stn.on').forEach(n => n.classList.remove('on'));
+}
+$('.x', card).addEventListener('click', closeCard);
+addEventListener('keydown', e => { if (e.key === 'Escape') { closeCard(); focusLine(null); } });
+map.addEventListener('click', () => { closeCard(); focusLine(null); });
+
+// ---------- line buttons: highlight a line and list its stops ----------
+let focused = null;
+function focusLine(id) {
+  focused = id;
+  map.classList.toggle('focus', !!id);
+  map.querySelectorAll('.line, .cap').forEach(n => n.classList.toggle('hl', n.dataset.line === id));
+  document.querySelectorAll('.ldot').forEach(b => b.classList.toggle('on', b.dataset.line === id));
+}
+document.querySelectorAll('.ldot').forEach(b => b.addEventListener('click', e => {
+  e.stopPropagation();
+  if (focused === b.dataset.line) { focusLine(null); closeCard(); return; }
+  focusLine(b.dataset.line);
+  openLine(b.dataset.line);
+}));
+
+// ---------- pause / play / fast forward ----------
+document.querySelectorAll('.speed button').forEach(b => b.addEventListener('click', () => {
+  speed = +b.dataset.speed;
+  document.querySelectorAll('.speed button').forEach(x => x.classList.toggle('on', x === b));
+}));
+
+// ---------- external links open in a new tab ----------
+document.querySelectorAll('.tools a[href^="http"]').forEach(a => { a.target = '_blank'; a.rel = 'noopener'; });
+
+// ---------- phone held upright: start with aiub in the middle ----------
+const sc = $('#scroller');
+if (sc.scrollWidth > sc.clientWidth) {
+  const aiub = DATA.stations.aiub;
+  sc.scrollLeft = aiub.x / 1600 * sc.scrollWidth - sc.clientWidth / 2;
+  $('#hint').textContent = 'swipe around, tap a station';
 }
