@@ -1,47 +1,60 @@
-// yaqzan's metro. the map itself is drawn by build.py, this file makes it run.
+// yaqzan's network map. the map itself is drawn by build.py, this file makes it run.
 
 const $ = (s, el = document) => el.querySelector(s);
 const NS = 'http://www.w3.org/2000/svg';
 const DATA = JSON.parse($('#data').textContent);
 const map = $('#map');
 const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
+let pending = null;     // the stop whose card should open when its train arrives
+let busyUntil = 0;      // the board stays on a ride message until then
 
-let speed = 1;          // 0 paused, 1 play, 3 fast forward
-let pending = null;     // the station whose card should open when its train arrives
-let riders = 0;
-try { riders = +localStorage.getItem('riders') || 0; } catch (e) {}
-
-// ---------- clock + day, top right ----------
-const ticks = $('.clock .ticks');
-for (let i = 0; i < 12; i++) {
-  const a = i * Math.PI / 6, l = document.createElementNS(NS, 'line');
-  l.setAttribute('x1', 21 * Math.sin(a)); l.setAttribute('y1', -21 * Math.cos(a));
-  l.setAttribute('x2', 24 * Math.sin(a)); l.setAttribute('y2', -24 * Math.cos(a));
-  ticks.append(l);
-}
+// ---------- station clock ----------
 function clock() {
   const d = new Date();
-  $('#dayname').textContent = d.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase();
-  $('#hand').setAttribute('transform', `rotate(${((d.getHours() % 12) + d.getMinutes() / 60) * 30})`);
+  const s = d.getSeconds(), m = d.getMinutes() + s / 60, h = (d.getHours() % 12) + m / 60;
+  $('#ch').setAttribute('transform', `rotate(${h * 30})`);
+  $('#cm').setAttribute('transform', `rotate(${m * 6})`);
+  $('#cs').setAttribute('transform', `rotate(${s * 6})`);
 }
 clock();
-setInterval(clock, 20000);
-const counter = $('#count');
-const showRiders = () => { counter.textContent = riders; };
-showRiders();
+setInterval(clock, 1000);
 
-// ---------- where every station sits along each line ----------
+// ---------- departures board ----------
+function board(top, dest, when) {
+  [['#led1', top], ['#led2', dest], ['#led3', when]].forEach(([id, text]) => {
+    const el = $(id);
+    if (el.textContent === text) return;
+    el.textContent = text;
+    el.closest('.led').classList.remove('flip'); void el.offsetWidth; el.closest('.led').classList.add('flip');
+  });
+}
+const IDLE = [
+  () => ['yaqzan\'s network', 'pick a stop', ''],
+  () => ['every line starts at', 'aiub', ''],
+  () => { const s = randomStop(); return [`next: ${DATA.lines[s.lines[0]].name}`, s.name, `${1 + Math.floor(Math.random() * 6)} min`]; },
+  () => { const s = randomStop(); return [`next: ${DATA.lines[s.lines[0]].name}`, s.name, `${1 + Math.floor(Math.random() * 6)} min`]; },
+];
+function randomStop() {
+  const ids = Object.keys(DATA.stations).filter(s => s !== 'aiub');
+  return DATA.stations[ids[Math.floor(Math.random() * ids.length)]];
+}
+let idle = 0;
+setInterval(() => {
+  if (Date.now() < busyUntil) return;
+  board(...IDLE[idle++ % IDLE.length]());
+}, 5000);
+
+// ---------- where every stop sits along each line ----------
 const lines = {};
 for (const [id, ln] of Object.entries(DATA.lines)) {
   const path = $(`#L-${id}`);
   const total = path.getTotalLength();
-  const samples = [];
-  for (let s = 0; s <= total; s += 2) samples.push([s, path.getPointAtLength(s)]);
   const at = {};
   for (const sid of ln.stations) {
     const st = DATA.stations[sid];
     let best = 0, bd = Infinity;
-    for (const [s, p] of samples) {
+    for (let s = 0; s <= total; s += 2) {
+      const p = path.getPointAtLength(s);
       const d = (p.x - st.x) ** 2 + (p.y - st.y) ** 2;
       if (d < bd) { bd = d; best = s; }
     }
@@ -50,14 +63,13 @@ for (const [id, ln] of Object.entries(DATA.lines)) {
   lines[id] = { ...ln, id, path, total, at, stops: ln.stations.map(s => at[s]).sort((a, b) => a - b) };
 }
 
-// ---------- one train per line, shuttling end to end like the game ----------
+// ---------- one train per line, running out and back ----------
 const trainLayer = $('#trains');
 const trains = Object.values(lines).map((ln, i) => {
   const g = document.createElementNS(NS, 'g');
-  g.setAttribute('class', 'train');
-  g.innerHTML = `<rect x="-19" y="-10" width="38" height="20" rx="3.5" fill="${ln.color}"/>`;
+  g.innerHTML = `<rect x="-15" y="-6.5" width="30" height="13" rx="2" fill="${ln.color}" stroke="#fff" stroke-width="2"/>`;
   trainLayer.append(g);
-  return { ln, g, s: (ln.total * (i * .37 % 1)), dir: i % 2 ? 1 : -1, wait: 0, target: null, then: null };
+  return { ln, g, s: ln.total * ((i * .37) % 1), dir: i % 2 ? 1 : -1, wait: 0, target: null, then: null, dist: 0 };
 });
 
 function place(t) {
@@ -67,99 +79,49 @@ function place(t) {
   t.g.setAttribute('transform', `translate(${p.x.toFixed(1)} ${p.y.toFixed(1)}) rotate(${ang.toFixed(1)})`);
 }
 
-function stationAt(ln, s) {
-  return ln.stations.find(sid => Math.abs(ln.at[sid] - s) < .5);
-}
-
-function arrive(t, sid) {
-  t.wait = 900;
-  board(sid);
-}
-
 function step(t, dt) {
   if (t.wait > 0) { t.wait -= dt * 1000; return; }
   if (t.target != null) {                       // sent somewhere by a click
     const left = t.target - t.s;
     const v = Math.max(380, Math.abs(t.dist) / 1.3);
-    const move = Math.sign(left) * Math.min(Math.abs(left), v * dt);
-    t.s += move;
+    t.s += Math.sign(left) * Math.min(Math.abs(left), v * dt);
     if (Math.abs(t.target - t.s) < .5) {
       t.s = t.target;
       const sid = t.then;
       t.target = t.then = null;
-      arrive(t, sid);
-      if (sid === pending) { pending = null; openStation(sid); }
+      t.wait = 1200;
+      if (sid === pending) {
+        pending = null;
+        board('arrived at', DATA.stations[sid].name, 'now');
+        busyUntil = Date.now() + 6000;
+        openStation(sid);
+      }
     }
     return;
   }
   const before = t.s;
-  t.s += t.dir * 70 * dt;
+  t.s += t.dir * (calm ? 30 : 60) * dt;
   const lo = Math.min(before, t.s), hi = Math.max(before, t.s);
   const hit = t.ln.stops.find(s => s > lo && s <= hi && Math.abs(s - before) > .5);
-  if (hit != null) { t.s = hit; arrive(t, stationAt(t.ln, hit)); }
+  if (hit != null) { t.s = hit; t.wait = 800; }
   if (t.s <= 0) { t.s = 0; t.dir = 1; }
   if (t.s >= t.ln.total) { t.s = t.ln.total; t.dir = -1; }
 }
 
 let prev = performance.now();
 function frame(now) {
-  const dt = Math.min((now - prev) / 1000, .05) * speed;
+  const dt = Math.min((now - prev) / 1000, .05);
   prev = now;
-  if (dt > 0) for (const t of trains) { step(t, dt); place(t); }
+  for (const t of trains) { step(t, dt); place(t); }
   requestAnimationFrame(frame);
 }
 trains.forEach(place);
 requestAnimationFrame(frame);
 
-// ---------- passengers: little shapes that pile up and get picked up ----------
-const SHAPES = ['circle', 'square', 'triangle', 'pentagon', 'diamond', 'cross', 'star'];
-const pax = Object.fromEntries(Object.keys(DATA.stations).map(s => [s, []]));
-const paxLayer = $('#pax');
-
-function drawPax(sid) {
-  paxLayer.querySelectorAll(`[data-s="${sid}"]`).forEach(n => n.remove());
-  const st = DATA.stations[sid];
-  const below = st.side === 't';
-  pax[sid].forEach((shape, i) => {
-    const u = document.createElementNS(NS, 'use');
-    u.setAttribute('href', `#sh-${shape}`);
-    u.setAttribute('data-s', sid);
-    u.setAttribute('width', 13); u.setAttribute('height', 13);
-    u.setAttribute('x', st.x + 22 + (i % 4) * 15);
-    u.setAttribute('y', below ? st.y + 18 + Math.floor(i / 4) * 15 : st.y - 32 - Math.floor(i / 4) * 15);
-    u.setAttribute('class', 'p');
-    paxLayer.append(u);
-  });
-}
-
-function spawn() {
-  if (speed > 0) {
-    const ids = Object.keys(pax).filter(s => pax[s].length < 6);
-    const sid = ids[Math.floor(Math.random() * ids.length)];
-    if (sid) {
-      const own = DATA.stations[sid].shape;
-      const opts = SHAPES.filter(s => s !== own);
-      pax[sid].push(opts[Math.floor(Math.random() * opts.length)]);
-      drawPax(sid);
-    }
-  }
-  setTimeout(spawn, (calm ? 4000 : 1400) / Math.max(speed, 1));
-}
-spawn();
-
-function board(sid) {
-  if (!sid || !pax[sid].length) return;
-  riders += pax[sid].length;
-  pax[sid] = [];
-  drawPax(sid);
-  showRiders();
-  try { localStorage.setItem('riders', riders); } catch (e) {}
-}
-
-// ---------- clicking a station sends a train ----------
+// ---------- picking a stop sends a train ----------
 function cancelTrips() {
   pending = null;
-  for (const t of trains) if (t.target != null) { t.target = t.then = null; }
+  for (const t of trains) if (t.target != null) t.target = t.then = null;
 }
 
 function send(sid, lineId) {
@@ -170,15 +132,20 @@ function send(sid, lineId) {
   for (const t of pool) if (Math.abs(t.s - t.ln.at[sid]) < Math.abs(best.s - best.ln.at[sid])) best = t;
   document.querySelectorAll('.stn.on').forEach(n => n.classList.remove('on'));
   $(`.stn[data-id="${sid}"]`).classList.add('on');
-  $('#hint').classList.add('gone');
   const goal = best.ln.at[sid];
-  if (speed === 0 || Math.abs(best.s - goal) < 1) { openStation(sid); return; }
-  pending = sid;
+  if (Math.abs(best.s - goal) < 1) {
+    board('arrived at', st.name, 'now');
+    busyUntil = Date.now() + 6000;
+    openStation(sid);
+    return;
+  }
+  board(`${best.ln.name} line to`, st.name, 'due');
+  busyUntil = Date.now() + 8000;
   best.wait = 0;
   best.target = goal;
   best.dist = goal - best.s;
   best.then = sid;
-  best.dir = Math.sign(goal - best.s) || 1;
+  pending = sid;
 }
 
 document.querySelectorAll('.stn').forEach(n => {
@@ -188,7 +155,7 @@ document.querySelectorAll('.stn').forEach(n => {
 
 // ---------- the card ----------
 const card = $('#card');
-function esc(s) { return s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
+function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
 function light(hex) {
   const [r, g, b] = [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16));
   return .299 * r + .587 * g + .114 * b > 170;
@@ -196,14 +163,14 @@ function light(hex) {
 function chips(ids) {
   return ids.map(l => {
     const { color, name } = DATA.lines[l];
-    return `<span style="--c:${esc(color)};color:${light(color) ? '#2f2f2f' : '#fff'}">${esc(name)}</span>`;
+    return `<span style="--c:${esc(color)};color:${light(color) ? '#1d1d1f' : '#fff'}">${esc(name)} line</span>`;
   }).join('');
 }
 
-function show(icon, title, lineIds, text, linksHtml) {
-  $('.card-shape use', card).setAttribute('href', icon ? `#sh-${icon}` : '');
-  $('.card-shape', card).style.display = icon ? '' : 'none';
+function show(title, tag, lineIds, text, linksHtml) {
+  card.style.setProperty('--c', DATA.lines[lineIds[0]].color);
   $('h2', card).textContent = title;
+  $('.card-tag', card).textContent = tag;
   $('.card-lines', card).innerHTML = chips(lineIds);
   $('.card-text', card).textContent = text;
   $('.card-links', card).innerHTML = linksHtml;
@@ -215,21 +182,21 @@ function show(icon, title, lineIds, text, linksHtml) {
 function goButton(sid, lineId) {
   const st = DATA.stations[sid];
   const l = lineId || st.lines[0];
-  return `<button class="go" style="--c:${DATA.lines[l].color}" data-go="${sid}" data-line="${lineId || ''}">${esc(st.name)}</button>`;
+  return `<button class="go" style="--c:${esc(DATA.lines[l].color)}" data-go="${esc(sid)}" data-line="${esc(lineId || '')}">${esc(st.name)}</button>`;
 }
 
 function openStation(sid) {
   const st = DATA.stations[sid];
   const links = st.links.map(([label, url]) =>
     `<a href="${esc(url)}"${url.startsWith('http') ? ' target="_blank" rel="noopener"' : ''}>${esc(label)} ↗</a>`).join('');
-  const related = st.related.map(r => goButton(r)).join('');
-  show(st.shape, st.name, st.lines, st.text, links + related);
+  show(st.name, st.tag, st.lines, st.text, links + st.related.map(r => goButton(r)).join(''));
 }
 
 function openLine(id) {
   const ln = DATA.lines[id];
-  $('#hint').classList.add('gone');
-  show(null, `${ln.name} line`, [id], `${ln.stations.length} stops. pick one.`, ln.stations.map(s => goButton(s, id)).join(''));
+  const stops = ln.stations.filter(s => s !== 'aiub');
+  show(`${ln.name} line`, `${stops.length} stops from aiub`, [id], 'pick a stop and a train takes you there.',
+    stops.map(s => goButton(s, id)).join(''));
 }
 
 function closeCard() {
@@ -241,12 +208,12 @@ $('.x', card).addEventListener('click', closeCard);
 addEventListener('keydown', e => { if (e.key === 'Escape') { closeCard(); focusLine(null); } });
 map.addEventListener('click', () => { closeCard(); focusLine(null); });
 
-// ---------- line buttons: highlight a line and list its stops ----------
+// ---------- legend: highlight a line and list its stops ----------
 let focused = null;
 function focusLine(id) {
   focused = id;
   map.classList.toggle('focus', !!id);
-  map.querySelectorAll('.line, .cap').forEach(n => n.classList.toggle('hl', n.dataset.line === id));
+  map.querySelectorAll('.line, .cap, .badge').forEach(n => n.classList.toggle('hl', n.dataset.line === id));
   document.querySelectorAll('.ldot').forEach(b => b.classList.toggle('on', b.dataset.line === id));
 }
 document.querySelectorAll('.ldot').forEach(b => b.addEventListener('click', e => {
@@ -256,19 +223,5 @@ document.querySelectorAll('.ldot').forEach(b => b.addEventListener('click', e =>
   openLine(b.dataset.line);
 }));
 
-// ---------- pause / play / fast forward ----------
-document.querySelectorAll('.speed button').forEach(b => b.addEventListener('click', () => {
-  speed = +b.dataset.speed;
-  document.querySelectorAll('.speed button').forEach(x => x.classList.toggle('on', x === b));
-}));
-
 // ---------- external links open in a new tab ----------
-document.querySelectorAll('.tools a[href^="http"]').forEach(a => { a.target = '_blank'; a.rel = 'noopener'; });
-
-// ---------- phone held upright: start with aiub in the middle ----------
-const sc = $('#scroller');
-if (sc.scrollWidth > sc.clientWidth) {
-  const aiub = DATA.stations.aiub;
-  sc.scrollLeft = aiub.x / 1600 * sc.scrollWidth - sc.clientWidth / 2;
-  $('#hint').textContent = 'swipe around, tap a station';
-}
+document.querySelectorAll('.exits a[href^="http"]').forEach(a => { a.target = '_blank'; a.rel = 'noopener'; });
