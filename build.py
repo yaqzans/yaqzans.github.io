@@ -410,8 +410,6 @@ KEY = ("A map of everything I’ve made. Stops are projects and papers. Lines ar
 def page():
     legend = "".join(f'<button class="ldot" data-line="{lid}" style="--c:{c}"><i></i>{esc(n)}'
                      f'<span>{len(stations_of(lid))}</span></button>' for lid, (n, c, _) in L.items())
-    m_tabs = "".join(f'<button class="m-tab" role="tab" data-line="{lid}" style="--c:{c}"><i></i><b>{esc(n)}</b>'
-                     f'<span>{len(stations_of(lid))} stops</span></button>' for lid, (n, c, _) in L.items())
     vx, vy, vw, vh = view()
     return f"""<!doctype html>
 <html lang="en">
@@ -428,13 +426,14 @@ def page():
   <aside class="column">
     <h1>Yaqzan’s</h1>
     <div class="stripes">{stripes()}</div>
-    <p class="key">{KEY} Click a stop to visit it.</p>
+    <p class="key">{KEY} <span class="do-click">Click</span><span class="do-tap">Tap</span> a stop to visit it.</p>
     <nav class="legend" aria-label="Lines">{legend}</nav>
     {exits_html("exits")}
   </aside>
 
+  <p class="swipe">↔ Swipe to explore the map</p>
   <main class="mapside"><div class="mapframe">
-    <svg id="map" viewBox="{vx} {vy} {vw} {vh}" preserveAspectRatio="xMidYMid meet" role="img"
+    <svg id="map" viewBox="{vx} {vy} {vw} {vh}" style="--ar:{vw / vh:.4f}" preserveAspectRatio="xMidYMid meet" role="img"
          aria-label="Metro map of projects, papers and activities. Lines are languages and kinds of work.">
 {map_svg()}
     </svg>
@@ -448,15 +447,6 @@ def page():
     <p class="card-text"></p>
     <div class="card-links"></div>
   </aside>
-</div>
-
-<!-- phone version: a line strip map, like the one above the doors in a train -->
-<div class="m">
-  <header class="m-head"><h1>Yaqzan’s</h1><div class="stripes">{stripes()}</div></header>
-  <p class="m-intro">{KEY} Pick a line, then tap a stop to visit it.</p>
-  <nav class="m-tabs" role="tablist">{m_tabs}</nav>
-  <section class="m-route" id="m-route" aria-live="polite"></section>
-  {exits_html("m-exits")}
 </div>
 
 <script id="data" type="application/json">{data_json()}</script>
