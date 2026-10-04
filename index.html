@@ -1,0 +1,387 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>yaqzan's room</title>
+<meta name="description" content="come in, the tv is on">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=VT323&family=UnifrakturMaguntia&family=Old+Standard+TT:ital,wght@0,400;0,700;1,400&family=Bungee&family=Special+Elite&family=Press+Start+2P&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<main id="tape">
+  <div id="stage">
+    <div id="pan">
+    <svg id="room" viewBox="0 0 960 540" role="img" aria-label="a small room at night with a tv, a bookshelf, a poster, a framed certificate, a phone and a newspaper">
+      <defs>
+        <pattern id="wall" width="32" height="32" patternUnits="userSpaceOnUse">
+          <rect width="32" height="32" fill="#2f5250"/>
+          <rect width="16" height="32" fill="#2b4b49"/>
+          <path d="M16 10 l4 6 -4 6 -4 -6z" fill="#3b615d"/>
+        </pattern>
+        <pattern id="floor" width="120" height="22" patternUnits="userSpaceOnUse">
+          <rect width="120" height="22" fill="#5b3a28"/>
+          <rect y="20" width="120" height="2" fill="#40271a"/>
+          <rect x="78" width="2" height="22" fill="#40271a"/>
+          <path d="M8 8 h40 M60 13 h30" stroke="#674330" stroke-width="2"/>
+        </pattern>
+        <radialGradient id="lampglow" cx="0.5" cy="0.5" r="0.5">
+          <stop offset="0" stop-color="#ffcf7a" stop-opacity=".45"/>
+          <stop offset="1" stop-color="#ffcf7a" stop-opacity="0"/>
+        </radialGradient>
+        <radialGradient id="tvglow" cx="0.5" cy="0.5" r="0.5">
+          <stop offset="0" stop-color="#7fb7ff" stop-opacity=".35"/>
+          <stop offset="1" stop-color="#7fb7ff" stop-opacity="0"/>
+        </radialGradient>
+        <pattern id="screenlines" width="4" height="3" patternUnits="userSpaceOnUse">
+          <rect width="4" height="1" fill="#000" opacity=".35"/>
+        </pattern>
+        <clipPath id="screenclip"><rect x="426" y="236" width="150" height="118" rx="14"/></clipPath>
+      </defs>
+
+      <!-- wall + floor -->
+      <rect width="960" height="388" fill="url(#wall)"/>
+      <rect y="388" width="960" height="152" fill="url(#floor)"/>
+      <rect y="380" width="960" height="10" fill="#d8c7a0"/>
+      <rect y="389" width="960" height="3" fill="#2a1a10" opacity=".6"/>
+
+      <!-- window -->
+      <g>
+        <rect x="58" y="52" width="156" height="176" fill="#d8c7a0"/>
+        <rect x="68" y="62" width="136" height="156" fill="#0e1a38"/>
+        <circle cx="170" cy="100" r="15" fill="#f1e6c2"/>
+        <circle cx="176" cy="96" r="13" fill="#0e1a38"/>
+        <g fill="#f1e6c2">
+          <rect x="88" y="82" width="3" height="3"/><rect x="120" y="120" width="2" height="2"/>
+          <rect x="96" y="160" width="2" height="2"/><rect x="150" y="150" width="3" height="3"/>
+          <rect x="182" y="180" width="2" height="2"/><rect x="132" y="76" width="2" height="2"/>
+          <rect x="84" y="196" width="2" height="2"/>
+        </g>
+        <!-- the city, far away -->
+        <g fill="#16213f">
+          <rect x="68" y="178" width="22" height="40"/><rect x="92" y="190" width="16" height="28"/>
+          <rect x="110" y="170" width="20" height="48"/><rect x="134" y="186" width="26" height="32"/>
+          <rect x="162" y="176" width="16" height="42"/><rect x="180" y="192" width="24" height="26"/>
+        </g>
+        <g fill="#e8c46a" opacity=".8">
+          <rect x="74" y="186" width="3" height="3"/><rect x="116" y="180" width="3" height="3"/>
+          <rect x="122" y="196" width="3" height="3"/><rect x="140" y="196" width="3" height="3"/>
+          <rect x="168" y="186" width="3" height="3"/><rect x="186" y="200" width="3" height="3"/>
+        </g>
+        <rect x="134" y="62" width="4" height="156" fill="#d8c7a0"/>
+        <rect x="68" y="138" width="136" height="4" fill="#d8c7a0"/>
+        <path d="M44 44 h50 q-12 90 4 196 h-54z" fill="#7a2c2c"/>
+        <path d="M228 44 h-50 q12 90 -4 196 h54z" fill="#7a2c2c"/>
+        <path d="M60 50 q4 90 -4 186 M212 50 q-4 90 4 186" stroke="#5e1f1f" stroke-width="3" fill="none"/>
+        <rect x="36" y="38" width="200" height="8" rx="4" fill="#3a2416"/>
+      </g>
+
+      <!-- poster: extracurriculars -->
+      <g class="obj" data-panel="poster" data-label="the poster" tabindex="0" role="button" aria-label="poster: extracurriculars">
+        <g transform="rotate(-4 305 125)">
+          <rect x="250" y="48" width="112" height="156" fill="#e7b62f"/>
+          <circle cx="306" cy="92" r="30" fill="#c3361f"/>
+          <circle cx="306" cy="92" r="18" fill="#e7b62f"/>
+          <circle cx="306" cy="92" r="6" fill="#1a1a1a"/>
+          <text x="306" y="150" text-anchor="middle" font-family="Bungee" font-size="20" fill="#1a1a1a">LIVE!</text>
+          <rect x="262" y="160" width="88" height="5" fill="#1a1a1a"/>
+          <rect x="262" y="170" width="70" height="4" fill="#1a1a1a" opacity=".7"/>
+          <rect x="262" y="179" width="80" height="4" fill="#1a1a1a" opacity=".7"/>
+          <rect x="262" y="188" width="56" height="4" fill="#1a1a1a" opacity=".7"/>
+          <rect x="244" y="42" width="24" height="10" fill="#f3ecd2" opacity=".75" transform="rotate(-20 256 47)"/>
+          <rect x="344" y="42" width="24" height="10" fill="#f3ecd2" opacity=".75" transform="rotate(25 356 47)"/>
+        </g>
+      </g>
+
+      <!-- framed certificate: education -->
+      <g class="obj" data-panel="cert" data-label="the frame" tabindex="0" role="button" aria-label="framed certificate: education">
+        <line x1="456" y1="40" x2="420" y2="74" stroke="#1b1b1b" stroke-width="1.5"/>
+        <line x1="456" y1="40" x2="492" y2="74" stroke="#1b1b1b" stroke-width="1.5"/>
+        <circle cx="456" cy="40" r="3" fill="#888"/>
+        <rect x="396" y="72" width="120" height="90" fill="#a8771f"/>
+        <rect x="402" y="78" width="108" height="78" fill="#7d5612"/>
+        <rect x="406" y="82" width="100" height="70" fill="#efe6cc"/>
+        <rect x="420" y="92" width="72" height="5" fill="#5a4a32"/>
+        <rect x="414" y="104" width="84" height="2" fill="#8a7a62"/>
+        <rect x="414" y="110" width="84" height="2" fill="#8a7a62"/>
+        <rect x="414" y="116" width="60" height="2" fill="#8a7a62"/>
+        <circle cx="488" cy="136" r="8" fill="#b4322a"/>
+        <path d="M418 138 q8 -8 14 0 t14 -2" stroke="#2a2a6a" stroke-width="1.5" fill="none"/>
+      </g>
+
+      <!-- lamp -->
+      <ellipse cx="722" cy="150" rx="120" ry="110" fill="url(#lampglow)" class="lampglow"/>
+      <g>
+        <rect x="719" y="160" width="6" height="226" fill="#2a2a2a"/>
+        <ellipse cx="722" cy="388" rx="26" ry="6" fill="#1e1e1e"/>
+        <path d="M694 160 l12 -46 h32 l12 46z" fill="#ead39a"/>
+        <path d="M694 160 l12 -46 h32 l12 46z" fill="none" stroke="#c9ad6a" stroke-width="2"/>
+      </g>
+
+      <!-- bookshelf: interests -->
+      <g class="obj" data-panel="books" data-label="the bookshelf" tabindex="0" role="button" aria-label="bookshelf: interests">
+        <rect x="768" y="72" width="160" height="330" fill="#5d3720"/>
+        <rect x="776" y="80" width="144" height="314" fill="#3a2214"/>
+        <g fill="#5d3720">
+          <rect x="776" y="150" width="144" height="8"/><rect x="776" y="230" width="144" height="8"/>
+          <rect x="776" y="310" width="144" height="8"/>
+        </g>
+        <g>
+          <rect x="782" y="96" width="14" height="54" fill="#b23b2e"/><rect x="797" y="104" width="12" height="46" fill="#e0b13a"/>
+          <rect x="810" y="92" width="16" height="58" fill="#2e6e8e"/><rect x="827" y="100" width="10" height="50" fill="#7a9a4a"/>
+          <rect x="846" y="104" width="13" height="46" fill="#c9c0a8" transform="rotate(12 846 150)"/>
+          <rect x="880" y="98" width="15" height="52" fill="#6a3d7a"/><rect x="896" y="108" width="18" height="42" fill="#d76b2e"/>
+          <rect x="782" y="178" width="18" height="52" fill="#2e6e8e"/><rect x="801" y="184" width="12" height="46" fill="#b23b2e"/>
+          <rect x="814" y="174" width="14" height="56" fill="#e8e0c8"/><rect x="829" y="186" width="16" height="44" fill="#3f5d3a"/>
+          <rect x="852" y="200" width="56" height="12" fill="#e0b13a"/><rect x="856" y="212" width="50" height="18" fill="#7a2c2c"/>
+          <rect x="782" y="262" width="12" height="48" fill="#d76b2e"/><rect x="795" y="256" width="16" height="54" fill="#1f3f6a"/>
+          <rect x="812" y="266" width="12" height="44" fill="#c9c0a8"/><rect x="825" y="258" width="14" height="52" fill="#b23b2e"/>
+          <rect x="840" y="262" width="18" height="48" fill="#6a3d7a"/>
+          <circle cx="890" cy="292" r="14" fill="#2f7a5a"/><rect x="882" y="296" width="16" height="14" fill="#a5532e"/>
+          <rect x="782" y="340" width="130" height="54" fill="#4a2b18"/>
+          <rect x="790" y="350" width="50" height="34" fill="#5d3720"/><rect x="850" y="350" width="54" height="34" fill="#5d3720"/>
+          <circle cx="836" cy="367" r="2.5" fill="#d8c7a0"/><circle cx="854" cy="367" r="2.5" fill="#d8c7a0"/>
+        </g>
+      </g>
+
+      <!-- rug -->
+      <ellipse cx="520" cy="486" rx="250" ry="42" fill="#7d2f2f"/>
+      <ellipse cx="520" cy="486" rx="226" ry="34" fill="none" stroke="#c9a55a" stroke-width="3" stroke-dasharray="10 6"/>
+      <ellipse cx="520" cy="486" rx="160" ry="22" fill="#8f3a36"/>
+      <ellipse cx="520" cy="470" rx="190" ry="34" fill="url(#tvglow)" class="tvfloor"/>
+
+      <!-- side table + phone: contact -->
+      <g>
+        <rect x="66" y="330" width="160" height="14" fill="#6b4126"/>
+        <rect x="76" y="344" width="10" height="120" fill="#4f2f1b"/>
+        <rect x="206" y="344" width="10" height="120" fill="#4f2f1b"/>
+        <rect x="80" y="420" width="132" height="8" fill="#4f2f1b"/>
+      </g>
+      <g class="obj" data-panel="phone" data-label="the phone" tabindex="0" role="button" aria-label="phone: contact">
+        <path d="M100 330 l12 -34 h68 l12 34z" fill="#b2302a"/>
+        <path d="M112 296 h68 l-4 -6 h-60z" fill="#8f2520"/>
+        <circle cx="146" cy="314" r="13" fill="#f0e6cc"/>
+        <circle cx="146" cy="314" r="5" fill="#b2302a"/>
+        <g fill="#2a2a2a">
+          <circle cx="146" cy="304" r="1.8"/><circle cx="154" cy="308" r="1.8"/><circle cx="156" cy="316" r="1.8"/>
+          <circle cx="151" cy="323" r="1.8"/><circle cx="141" cy="323" r="1.8"/><circle cx="136" cy="316" r="1.8"/>
+          <circle cx="138" cy="308" r="1.8"/>
+        </g>
+        <path d="M104 290 q0 -16 18 -16 h48 q18 0 18 16 l-8 4 q-2 -10 -14 -10 h-40 q-12 0 -14 10z" fill="#c13a33"/>
+        <path d="M190 314 q24 4 20 30 q-4 30 20 44" stroke="#1d1d1d" stroke-width="2" fill="none"/>
+        <circle cx="182" cy="324" r="3" fill="#ff3b30" class="blink"/>
+      </g>
+
+      <!-- tv stand, vcr, tv: projects -->
+      <rect x="396" y="390" width="240" height="70" fill="#5d3720"/>
+      <rect x="404" y="398" width="108" height="54" fill="#3a2214"/>
+      <rect x="520" y="398" width="108" height="54" fill="#3a2214"/>
+      <rect x="410" y="420" width="44" height="30" fill="#1d1d1d"/><rect x="456" y="424" width="44" height="26" fill="#2b2b2b"/>
+      <text x="432" y="438" text-anchor="middle" font-family="VT323" font-size="9" fill="#d8c7a0">VHS</text>
+      <g class="obj" data-panel="tv" data-label="the tv" tabindex="0" role="button" aria-label="tv: projects">
+        <rect x="430" y="372" width="172" height="18" rx="2" fill="#1e1e1e"/>
+        <rect x="440" y="377" width="60" height="6" fill="#0c0c0c"/>
+        <text x="580" y="385" text-anchor="middle" font-family="VT323" font-size="12" fill="#5dff7a" class="vcr">12:00</text>
+        <line x1="516" y1="216" x2="474" y2="150" stroke="#9a9a9a" stroke-width="2.5"/>
+        <line x1="516" y1="216" x2="566" y2="146" stroke="#9a9a9a" stroke-width="2.5"/>
+        <circle cx="474" cy="150" r="4" fill="#9a9a9a"/><circle cx="566" cy="146" r="4" fill="#9a9a9a"/>
+        <rect x="500" y="208" width="32" height="12" rx="6" fill="#2a2a2a"/>
+        <rect x="406" y="216" width="222" height="158" rx="18" fill="#bdb4a0"/>
+        <rect x="406" y="216" width="222" height="158" rx="18" fill="none" stroke="#8d8471" stroke-width="3"/>
+        <rect x="418" y="228" width="166" height="134" rx="18" fill="#3a3730"/>
+        <rect x="426" y="236" width="150" height="118" rx="14" fill="#06070f"/>
+        <g clip-path="url(#screenclip)">
+          <rect id="screenflash" x="426" y="236" width="150" height="118" fill="#fff" opacity="0"/>
+          <g id="dvd">
+            <ellipse cx="25" cy="17" rx="25" ry="5" fill="currentColor" opacity=".9"/>
+            <text x="25" y="12" text-anchor="middle" font-family="Press Start 2P" font-size="7" fill="currentColor">yaqzan</text>
+            <ellipse cx="25" cy="17" rx="10" ry="2" fill="#06070f"/>
+          </g>
+          <rect x="426" y="236" width="150" height="118" fill="url(#screenlines)"/>
+          <ellipse cx="470" cy="256" rx="40" ry="14" fill="#fff" opacity=".05"/>
+        </g>
+        <circle cx="603" cy="252" r="9" fill="#5b564b"/><circle cx="603" cy="252" r="3" fill="#2a2a2a"/>
+        <circle cx="603" cy="280" r="7" fill="#5b564b"/>
+        <g stroke="#6f6858" stroke-width="2"><line x1="594" y1="304" x2="612" y2="304"/><line x1="594" y1="312" x2="612" y2="312"/>
+          <line x1="594" y1="320" x2="612" y2="320"/><line x1="594" y1="328" x2="612" y2="328"/><line x1="594" y1="336" x2="612" y2="336"/></g>
+        <circle cx="603" cy="352" r="2.5" fill="#ff3b30"/>
+      </g>
+
+      <!-- floppy on the rug: cv -->
+      <g class="obj" data-panel="cv" data-label="the floppy" tabindex="0" role="button" aria-label="floppy disk: cv">
+        <g transform="rotate(14 668 488)">
+          <rect x="644" y="462" width="50" height="52" rx="2" fill="#1c1c22"/>
+          <rect x="656" y="462" width="26" height="16" fill="#b9bcc2"/>
+          <rect x="672" y="465" width="6" height="10" fill="#1c1c22"/>
+          <rect x="651" y="484" width="36" height="26" fill="#f0e9d6"/>
+          <rect x="651" y="484" width="36" height="5" fill="#c3361f"/>
+          <text x="669" y="503" text-anchor="middle" font-family="Special Elite" font-size="11" fill="#1a1a8a">CV</text>
+        </g>
+      </g>
+
+      <!-- newspaper on the rug: publications -->
+      <g class="obj" data-panel="paper" data-label="the newspaper" tabindex="0" role="button" aria-label="newspaper: publications">
+        <g transform="rotate(-9 330 488)">
+          <rect x="268" y="458" width="126" height="64" fill="#cfc8b6"/>
+          <rect x="264" y="454" width="126" height="64" fill="#ebe5d4"/>
+          <text x="327" y="470" text-anchor="middle" font-family="UnifrakturMaguntia" font-size="12" fill="#1a1a1a">The Daily Yaqzan</text>
+          <rect x="270" y="474" width="114" height="1.5" fill="#1a1a1a"/>
+          <rect x="272" y="480" width="50" height="26" fill="#9c958a"/>
+          <g fill="#6f6a60">
+            <rect x="328" y="480" width="54" height="2"/><rect x="328" y="485" width="54" height="2"/>
+            <rect x="328" y="490" width="54" height="2"/><rect x="328" y="495" width="40" height="2"/>
+            <rect x="272" y="510" width="110" height="2"/>
+          </g>
+        </g>
+      </g>
+    </svg>
+    </div>
+
+    <!-- camcorder on-screen display -->
+    <div class="osd tl">PLAY <span class="tri">&#9654;</span></div>
+    <div class="osd tr">SP</div>
+    <div class="osd bl"><span id="tag">yaqzan's room</span><br><span id="corners"></span></div>
+    <div class="osd br"><span id="date"></span><br><span id="time"></span></div>
+    <div class="osd hint" id="hint">click around</div>
+    <div class="osd label" id="label"></div>
+    <div class="osd big" id="big"></div>
+
+    <div class="fx scan"></div>
+    <canvas class="fx noise" id="noise" width="160" height="90"></canvas>
+    <div class="fx band" id="band"></div>
+    <div class="fx vignette"></div>
+  </div>
+</main>
+
+<!-- panels -->
+<div class="panel" id="panel-tv" role="dialog" aria-label="projects" hidden>
+  <div class="sheet guide">
+    <button class="close" aria-label="close">&times;</button>
+    <div class="guide-top"><span>YAQZAN CABLE</span><span id="guide-time"></span></div>
+    <div class="guide-now">now showing: <b>the logo that never hits the corner</b></div>
+    <ol id="channels"><li class="loading">tuning in...</li></ol>
+    <p class="guide-foot">all channels at <a href="https://github.com/yaqzans">github.com/yaqzans</a></p>
+  </div>
+</div>
+
+<div class="panel" id="panel-paper" role="dialog" aria-label="publications" hidden>
+  <div class="sheet news">
+    <button class="close" aria-label="close">&times;</button>
+    <div class="masthead">
+      <div class="ears"><span>vol. iv</span><span>price: 5 taka</span></div>
+      <h1>The Daily Yaqzan</h1>
+      <div class="dateline"><span>dhaka</span><span id="news-date"></span><span>4 papers so far</span></div>
+    </div>
+    <article class="lead">
+      <h2>Robot hand copies your fingers, no glove needed</h2>
+      <p class="real">Gesture Controlled Robotic Hand Designed for Enhancing Industrial Automation and Innovation</p>
+      <p class="by">IEEE QPAIN 2026 &middot; yaqzan is second and corresponding author</p>
+      <a href="https://doi.org/10.1109/QPAIN69676.2026.11545528">read it &rarr;</a>
+    </article>
+    <div class="cols">
+      <article>
+        <h3>Fake blood, real experiments</h3>
+        <p class="real">Development of a Simulated Blood-Like Solution for Medical Experiments</p>
+        <p class="by">Analytical Chemistry Letters, 2025 &middot; first shown at the International Conference on Physics 2024</p>
+        <a href="https://doi.org/10.1080/22297928.2025.2533331">read it &rarr;</a>
+      </article>
+      <article>
+        <h3>Agile or waterfall? Why not both</h3>
+        <p class="real">Evaluating the Performance of Agile-Waterfall Integrated Approaches in Large Scale Engineering Projects in Bangladesh</p>
+        <p class="by">IEOM Bangladesh 2025</p>
+        <a href="https://doi.org/10.46254/BA08.20250467">read it &rarr;</a>
+      </article>
+      <article>
+        <h3>Humans and AI share the animation desk</h3>
+        <p class="real">A Hybrid Human-AI Model for Sustainable Innovation in Media and Animation</p>
+        <p class="by">ICCTASS 2025</p>
+      </article>
+    </div>
+    <p class="news-foot">back issues at <a href="https://scholar.google.com/citations?user=DwskOfEAAAAJ&hl=en">google scholar</a></p>
+  </div>
+</div>
+
+<div class="panel" id="panel-poster" role="dialog" aria-label="extracurriculars" hidden>
+  <div class="sheet gig">
+    <button class="close" aria-label="close">&times;</button>
+    <p class="gig-pre">one night only, several times</p>
+    <h1>yaqzan<br><span>live around dhaka</span></h1>
+    <ul>
+      <li><b>AI workshop</b><i>U.S. Embassy, American Center Dhaka</i><em>picked to represent AIUB</em></li>
+      <li><b>Let's Talk with the UNDP Resident Rep</b><i>roundtable on youth and the SDGs</i><em>representing AIUB</em></li>
+      <li><b>AIUB English Club</b><i>organiser and content writer</i><em>10+ events, 50+ members</em></li>
+      <li><b>AIUB Poster Presentation Competition</b><i>selected participant</i><em>yes, a poster about posters</em></li>
+    </ul>
+    <p class="gig-foot">no refunds</p>
+  </div>
+</div>
+
+<div class="panel" id="panel-cert" role="dialog" aria-label="education" hidden>
+  <div class="sheet cert">
+    <button class="close" aria-label="close">&times;</button>
+    <div class="cert-in">
+      <h1>Certificate of Currently Studying</h1>
+      <p>this is to certify that</p>
+      <h2>yaqzan</h2>
+      <p>is doing a <b>BSc in Computer Science &amp; Engineering</b><br>at American International University-Bangladesh</p>
+      <p class="small">major in computational theory &middot; minor in data science &middot; done by january 2027</p>
+      <p class="small">dean's list twice &middot; academic scholarship &middot; cgpa 3.96</p>
+      <p class="small dim">before that: SSC and HSC at Scholar's School &amp; College</p>
+      <div class="sigs"><span>registrar</span><div class="seal">AIUB</div><span>me</span></div>
+    </div>
+  </div>
+</div>
+
+<div class="panel" id="panel-books" role="dialog" aria-label="interests" hidden>
+  <div class="sheet shelf">
+    <button class="close" aria-label="close">&times;</button>
+    <h1>what's on the shelf</h1>
+    <div class="spines">
+      <span style="--c:#b23b2e;--h:250px">graph theory</span>
+      <span style="--c:#2e6e8e;--h:280px">machine learning</span>
+      <span style="--c:#e0b13a;--h:230px;--t:#1a1a1a">medical imaging</span>
+      <span style="--c:#3f5d3a;--h:265px">computer vision</span>
+      <span style="--c:#6a3d7a;--h:240px">bangla nlp</span>
+      <span style="--c:#d76b2e;--h:215px">hci</span>
+      <span style="--c:#1f3f6a;--h:255px">data science</span>
+      <span style="--c:#c9c0a8;--h:225px;--t:#1a1a1a">esp32 tinkering</span>
+    </div>
+  </div>
+</div>
+
+<div class="panel" id="panel-phone" role="dialog" aria-label="contact" hidden>
+  <div class="sheet machine">
+    <button class="close" aria-label="close">&times;</button>
+    <div class="lcd"><span class="blink">&#9679;</span> 1 NEW MESSAGE</div>
+    <p class="greeting">"hey, it's yaqzan. can't pick up right now. leave a message after the beep, or press a button."</p>
+    <div class="keys">
+      <a href="https://www.linkedin.com/in/shamvi-md-abdullah-b42a321a6/"><kbd>1</kbd>linkedin</a>
+      <a href="https://scholar.google.com/citations?user=DwskOfEAAAAJ&hl=en"><kbd>2</kbd>google scholar</a>
+      <a href="https://orcid.org/0009-0005-9717-9426"><kbd>3</kbd>orcid</a>
+      <a href="mailto:shamvi.abdullah@gmail.com"><kbd>4</kbd>email</a>
+      <a href="https://github.com/yaqzans"><kbd>5</kbd>github</a>
+    </div>
+  </div>
+</div>
+
+<div class="panel" id="panel-cv" role="dialog" aria-label="cv" hidden>
+  <div class="sheet disk">
+    <button class="close" aria-label="close">&times;</button>
+    <div class="dos">
+      <p>A:\&gt; dir</p>
+      <p>&nbsp;ShamviMdAbdullah.pdf &nbsp;&nbsp;2 pages</p>
+      <p>A:\&gt; <span class="cursor">_</span></p>
+    </div>
+    <div class="disk-btns">
+      <a href="ShamviMdAbdullah.pdf" target="_blank" rel="noopener">open cv</a>
+      <a href="ShamviMdAbdullah.pdf" download>download</a>
+    </div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
