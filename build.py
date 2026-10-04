@@ -29,96 +29,109 @@ def st(name, tag, x, y, side, text, links=(), related=()):
 
 S = {
     # python
-    "md": st("Markdown Converter", "Anything to Markdown", 160, 250, "t",
+    "md": st("Markdown Converter", "Anything to Markdown", 1540, 640, "br",
              "PDF, Word, PowerPoint or Excel in, clean Markdown out. A single Windows executable, nothing to install.",
              [("Repo", "https://github.com/yaqzans/markdown-converter-app")]),
-    "oshud": st("OshudBot", "Bangla medicine bot", 300, 250, "b",
+    "oshud": st("OshudBot", "Bangla medicine bot", 220, 330, "b",
                 "Covers 21,714 medicine brands and answers in Bangla, English or Banglish in about 15 ms on a CPU. "
                 "It replaced 1.1 GB of models with transliteration and fuzzy matching at no loss in answer quality.",
                 [("Repo", "https://github.com/yaqzans/oshudbot"), ("Try it", "https://oshudbot.streamlit.app/")],
                 ["medease"]),
-    "medease": st("MedEase BD", "Offline medicine LLM", 440, 250, "t",
+    "medease": st("MedEase BD", "Offline medicine LLM", 420, 330, "b",
                   "The heavier sibling of OshudBot. RAG over 21,000+ medicines plus a Gemma 3 4B fine-tuned on "
                   "36,000+ medicine Q&A pairs, running fully offline.", [], ["oshud"]),
-    "vehicle": st("Vehicle Recognition", "YOLO + ConvNeXt", 760, 430, "b",
+    "vehicle": st("Vehicle Recognition", "YOLO + ConvNeXt", 720, 330, "b",
                   "Bangladeshi road vehicles on RSUD20K. YOLO26n finds them and ConvNeXt-Tiny classifies every crop. "
                   "Code, results and the paper.",
                   [("Repo", "https://github.com/yaqzans/cvpr-two-stage-vehicle-recognition")]),
-    "hand": st("Robotic Hand", "Became the QPAIN paper", 900, 430, "tl",
+    "hand": st("Robotic Hand", "Became the QPAIN paper", 920, 330, "tl",
                "A camera watches your hand and a 7-servo robotic hand copies it, with no gloves or sensors. Python "
                "and MediaPipe on the laptop, an ESP32 driving the servos. 88 ms end to end at 24.6 FPS, built for "
                "about 2,800 BDT. It became a paper: Gesture Controlled Robotic Hand Designed for Enhancing "
                "Industrial Automation and Innovation, IEEE QPAIN 2026, second and corresponding author.",
                [("Read the paper", "https://doi.org/10.1109/QPAIN69676.2026.11545528")]),
-    "who": st("Who Should Count More", "Voting simulation", 1240, 430, "br",
+    "who": st("Who Should Count More", "Voting simulation", 1240, 330, "tr",
               "Should educated votes count more? A Python simulation with a playable JavaScript front end: set up "
               "the electorate, run the election and see who wins.",
               [("Play", "https://yaqzans.github.io/who-should-count-more/"),
                ("Repo", "https://github.com/yaqzans/who-should-count-more")]),
 
     # c++
-    "parking": st("2D Parking", "OpenGL game", 900, 170, "r",
+    "parking": st("2D Parking", "OpenGL game", 1600, 330, "b",
                   "Park the car before the timer runs out. C++ with OpenGL and GLUT, for a computer graphics course.",
                   [("Repo", "https://github.com/yaqzans/2D-Parking-Game")]),
-    "pm25": st("PM2.5 Monitor", "ESP32 + React Native", 1060, 590, "l",
+    "pm25": st("PM2.5 Monitor", "ESP32 + React Native", 1240, 700, "tr",
                "Pocket air quality monitor: ESP32-C3 firmware plus a React Native app over BLE. It alerts only on "
                "genuine spikes, not on Dhaka's constantly high baseline. In a two-week field study it sent about 4 "
                "alerts a day instead of dozens, and each one was acted on."),
 
     # javascript
-    "ttt": st("TicTacToe ∞", "4 pieces, then move them", 1400, 250, "t",
+    "ttt": st("TicTacToe ∞", "4 pieces, then move them", 1240, 190, "r",
               "Tic-tac-toe where each player only gets 4 pieces and then has to move them. Vanilla JavaScript, "
               "with a bot that has a difficulty slider.",
               [("Play", "https://yaqzans.github.io/TicTacToeInfinity/"),
                ("Repo", "https://github.com/yaqzans/TicTacToeInfinity")]),
-    "survey": st("Survey Platform", "PHP + MySQL", 920, 760, "br",
+    "survey": st("Survey Platform", "PHP + MySQL", 1380, 860, "br",
                  "NeedSurveyResponses: answer other people's surveys to earn credits, then spend credits to publish "
                  "your own. PHP, MySQL and JavaScript, with separate user and admin views."),
 
     # data
-    "prod": st("Productivity Manager", "C# + MS SQL", 600, 760, "b",
+    "prod": st("Productivity Manager", "C# + MS SQL", 1240, 860, "b",
                "Notes, reminders and a timer in one C# desktop app, with logins and an MS SQL database underneath.",
                [("Repo", "https://github.com/yaqzans/Productivity-Manager")]),
-    "sarcasm": st("Sarcasm Detection", "Bag of Words vs TF-IDF", 1360, 880, "t",
+    "sarcasm": st("Sarcasm Detection", "Bag of Words vs TF-IDF", 300, 120, "b",
                   "Can a classifier tell when a tweet is sarcastic? Bag of Words against TF-IDF across four "
                   "classifiers, in R.", [("Repo", "https://github.com/yaqzans/ids-sarcasm-detection")]),
 
     # papers
-    "blood": st("Blood-Like Solution", "Analytical Chemistry Letters", 420, 620, "b",
+    "blood": st("Blood-Like Solution", "Analytical Chemistry Letters", 720, 900, "r",
                 "Development of a Simulated Blood-Like Solution for Medical Experiments. Presented at the "
                 "International Conference on Physics 2024 and published in Analytical Chemistry Letters (2025). "
                 "Fifth author.", [("Read the paper", "https://doi.org/10.1080/22297928.2025.2533331")]),
-    "agile": st("Agile + Waterfall", "IEOM Bangladesh 2025", 580, 620, "t",
+    "agile": st("Agile + Waterfall", "IEOM Bangladesh 2025", 720, 790, "r",
                 "Evaluating the Performance of Agile-Waterfall Integrated Approaches in Large Scale Engineering "
                 "Projects in Bangladesh. IEOM Bangladesh 2025. Fifth author.",
                 [("Read the paper", "https://doi.org/10.46254/BA08.20250467")]),
-    "hybrid": st("Human-AI Animation", "ICCTASS 2025", 740, 620, "b",
+    "hybrid": st("Human-AI Animation", "ICCTASS 2025", 720, 680, "r",
                  "A Hybrid Human-AI Model for Sustainable Innovation in Media and Animation. Presented at ICCTASS "
                  "2025. Third author."),
 
     # out & about
-    "poster": st("Poster Competition", "Selected participant", 40, 900, "t",
+    "poster": st("Poster Competition", "Selected participant", 160, 640, "t",
                  "Selected participant in the AIUB Poster Presentation Competition."),
-    "english": st("English Club", "Organiser, 10+ events", 200, 900, "b",
+    "english": st("English Club", "Organiser, 10+ events", 440, 640, "t",
                   "Organiser and content writer at the AIUB English Club. Ran 10+ events and workshops for 50+ members."),
-    "embassy": st("U.S. Embassy", "AI workshop", 360, 900, "t",
+    "embassy": st("U.S. Embassy", "AI workshop", 440, 860, "b",
                   "AI workshop at the American Center, Dhaka. Selected by the Faculty of Science and Technology to "
                   "represent the university."),
-    "undp": st("UNDP Roundtable", "Youth and the SDGs", 520, 900, "b",
+    "undp": st("UNDP Roundtable", "Youth and the SDGs", 160, 860, "b",
                "Selected to represent the university at \"Let's Talk with the UNDP Resident Representative\", a "
                "roundtable on youth engagement in the SDGs."),
 }
 
 # lines: id -> (name, color, route). a route is station ids and (x, y) waypoints; the arrow goes on the end
 L = {
-    "py":     ("Python", "#6b7d2a", ["md", "oshud", "medease", "vehicle", "hand", "who", (1560, 430)]),
-    "js":     ("JavaScript", "#d6a21e", ["ttt", "who", "pm25", "survey", (920, 860)]),
-    "cpp":    ("C++", "#7a3f22", ["parking", "hand", "pm25"]),
-    "sql":    ("SQL", "#2f7f8f", ["prod", "survey", (1100, 760)]),
-    "r":      ("R", "#8a5a83", ["sarcasm", (1560, 880)]),
-    "papers": ("Papers", "#233a6b", ["blood", "agile", "hybrid", "hand", (1020, 310)]),
-    "out":    ("Out & About", "#e8731c", ["poster", "english", "embassy", "undp", (600, 900)]),
+    "py":     ("Python", "#6b7d2a", ["oshud", "medease", "vehicle", "hand", "who", "md", (1620, 640)]),
+    "js":     ("JavaScript", "#d6a21e", ["ttt", "who", "pm25", "survey", (1490, 860)]),
+    "cpp":    ("C++", "#7a3f22", ["parking", (1600, 100), (1150, 100), "hand", (1060, 470), (1060, 700), "pm25"]),
+    "sql":    ("SQL", "#2f7f8f", ["survey", "prod", (1200, 860)]),
+    "r":      ("R", "#8a5a83", [(130, 120), "sarcasm", (440, 120)]),
+    "papers": ("Papers", "#233a6b", ["blood", "agile", "hybrid", "hand", (920, 200)]),
+    "out":    ("Out & About", "#e8731c", ["poster", "english", "embassy", "undp", (60, 860)]),
 }
+
+# fields are pieces of land with water between them; lines cross the water on bridges
+REGIONS = [  # name, x0, y0, x1, y1, corner for the district name
+    ("Data", 70, 40, 560, 210, "tr"),
+    ("Natural Language", 70, 250, 560, 430, "tl"),
+    ("Vision & Robotics", 640, 40, 1080, 430, "tl"),
+    ("Web & Games", 1160, 40, 1660, 430, "tl"),
+    ("Community", 30, 540, 560, 980, "bl"),
+    ("Research", 640, 540, 1080, 980, "tr"),
+    ("Systems & Tools", 1160, 540, 1660, 980, "bl"),
+]
+WATER = "#bfd0cc"
+LAND_R = 46
 
 W, H = 1800, 1000
 BG, INK, SOFT, ZONE, NOWC = "#efe9dc", "#111111", "#6b5f4f", "#e7dfcd", "#e8731c"
@@ -274,7 +287,8 @@ def label(sid):
     x0, y0, x1, y1 = marker_box(sid)
     nx, ny, anchor = {"r": (x1 + 12, y + 2, "start"), "l": (x0 - 12, y + 2, "end"),
                       "t": (x, y0 - 42, "middle"), "b": (x, y1 + 33, "middle"),
-                      "tl": (x0 - 10, y0 - 34, "end"), "br": (x1 + 10, y1 + 30, "start")}[side]
+                      "tl": (x0 - 10, y0 - 34, "end"), "br": (x1 + 10, y1 + 30, "start"),
+                      "tr": (x1 + 10, y0 - 34, "start"), "bl": (x0 - 10, y1 + 30, "end")}[side]
     return (f'<text x="{nx:.0f}" y="{ny:.0f}" text-anchor="{anchor}" class="lbl">{esc(s["name"])}</text>'
             f'<text x="{nx:.0f}" y="{ny + 26:.0f}" text-anchor="{anchor}" class="tag">{esc(s["tag"])}</text>')
 
@@ -324,9 +338,9 @@ def view():
     for sid, v in S.items():
         x0, y0, x1, y1 = marker_box(sid)
         w = max(len(v["name"]) * 16, len(v["tag"]) * 10.5)
-        if v["side"] in ("l", "tl"):
+        if v["side"] in ("l", "tl", "bl"):
             xs.append(x0 - 8 - w)
-        elif v["side"] in ("r", "br"):
+        elif v["side"] in ("r", "br", "tr"):
             xs.append(x1 + 8 + w)
         else:
             xs += [v["x"] - w / 2, v["x"] + w / 2]
@@ -339,19 +353,45 @@ def view():
     return (round(min(xs) - 30), round(y0), round(max(xs) - min(xs) + 60), round(max(ys) - y0 + 30))
 
 
+def rrect(x0, y0, x1, y1, r):
+    return (f"M{x0 + r},{y0} H{x1 - r} Q{x1},{y0} {x1},{y0 + r} V{y1 - r} Q{x1},{y1} {x1 - r},{y1} "
+            f"H{x0 + r} Q{x0},{y1} {x0},{y1 - r} V{y0 + r} Q{x0},{y0} {x0 + r},{y0} Z")
+
+
 def zones():
-    """No timeline any more: nothing behind the lines."""
-    return ""
+    """Water everywhere, the fields as land on top of it, each with its name in big faint letters."""
+    o = [f'<rect x="-600" y="-600" width="{W + 1600}" height="{H + 1600}" fill="{WATER}"/>']
+    for name, x0, y0, x1, y1, corner in REGIONS:
+        o.append(f'<path class="land" d="{rrect(x0, y0, x1, y1, LAND_R)}" fill="{BG}"/>')
+    for name, x0, y0, x1, y1, corner in REGIONS:   # district name in a corner, like on a city map
+        x, anchor = (x0 + 26, "start") if corner[1] == "l" else (x1 - 26, "end")
+        y = y0 + 40 if corner[0] == "t" else y1 - 18
+        o.append(f'<text x="{x}" y="{y}" text-anchor="{anchor}" class="district">{esc(name.upper())}</text>')
+    return "".join(o)
+
+
+def bridges():
+    """Where a line runs over water, draw it on a bridge deck: a pale band with dark edges, clipped to the water."""
+    water = f"M-600,-600 H{W + 1000} V{H + 1000} H-600 Z " + " ".join(rrect(x0, y0, x1, y1, LAND_R)
+                                                                      for _, x0, y0, x1, y1, _c in REGIONS)
+    o = [f'<clipPath id="wateronly"><path d="{water}" clip-rule="evenodd"/></clipPath><g clip-path="url(#wateronly)">']
+    for lid in L:
+        d = rounded(line_points(lid))
+        o.append(f'<path d="{d}" fill="none" stroke="#3d2617" stroke-width="{LW + 16}"/>')
+        o.append(f'<path d="{d}" fill="none" stroke="{BG}" stroke-width="{LW + 9}"/>')
+    o.append("</g>")
+    return "".join(o)
 
 
 def map_svg(interactive=True):
     style = (f"<style>.lbl{{font:700 27px {FONT};fill:{INK}}}.tag{{font:500 19px {FONT};fill:{SOFT}}}"
              f".lbl,.tag{{paint-order:stroke;stroke:{BG};stroke-width:6px;stroke-linejoin:round}}"
              f".year{{font:800 62px {FONT};fill:#e2ded5;letter-spacing:2px}}"
-             f".now{{font:700 18px {FONT};fill:{NOWC};letter-spacing:4px}}</style>")
+             f".now{{font:700 18px {FONT};fill:{NOWC};letter-spacing:4px}}"
+             f".district{{font:800 21px {FONT};fill:#b3a283;letter-spacing:5px}}</style>")
     defs = ('<defs><pattern id="future" width="14" height="14" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">'
             f'<rect width="1.5" height="14" fill="{INK}" opacity=".07"/></pattern></defs>')
-    o = [style, defs, f'<rect x="-600" y="-600" width="{W + 1600}" height="{H + 1600}" fill="{BG}"/>', zones()]
+    o = [style, defs, zones(), bridges()]
     for lid, (name, color, _) in L.items():
         o.append(f'<path id="L-{lid}" class="line" data-line="{lid}" d="{rounded(line_points(lid))}" fill="none" '
                  f'stroke="{color}" stroke-width="{LW}" stroke-linejoin="round"/>')
