@@ -433,12 +433,12 @@ def page():
     <p class="hint">Click any stop to ride there.</p>
   </aside>
 
-  <main class="mapside">
+  <main class="mapside"><div class="mapframe">
     <svg id="map" viewBox="{vx} {vy} {vw} {vh}" preserveAspectRatio="xMidYMid meet" role="img"
          aria-label="Metro map of projects, papers and activities. Lines are languages and kinds of work.">
 {map_svg()}
     </svg>
-  </main>
+  </div></main>
 
   <aside class="card" id="card" hidden aria-live="polite">
     <button class="x" aria-label="Close">&times;</button>
@@ -478,8 +478,10 @@ def teaser():
     vx, vy, vw, vh = view()
     TW = 1600
     band, stripe = 120, 14
-    mh = TW * vh / vw
-    TH = round(band + stripe + mh + 20)
+    fb, gap = 12, 14            # brown frame width, paper gap inside it
+    mw = TW - 2 * (24 + fb + gap)
+    mh = mw * vh / vw
+    TH = round(band + stripe + 24 + 2 * (fb + gap) + mh + 24)
     trains = []
     for i, lid in enumerate(L):
         color = L[lid][1]
@@ -502,7 +504,9 @@ def teaser():
   <text x="{TW - 44}" y="72" text-anchor="end" font-family="{FONT}" font-size="22" font-weight="700" fill="#e8731c">Projects, papers and the rest</text>
   <text x="{TW - 44}" y="98" text-anchor="end" font-family="{FONT}" font-size="17" fill="#bdb3a2">Lines are languages. Where they cross, a project used both.</text>
   {bars}
-  <svg x="0" y="{band + stripe}" width="{TW}" height="{mh:.0f}" viewBox="{vx} {vy} {vw} {vh}">{body}</svg>
+  <rect x="{24 + fb / 2}" y="{band + stripe + 24 + fb / 2}" width="{TW - 48 - fb}" height="{mh + 2 * gap + fb:.0f}" fill="none" stroke="#3d2617" stroke-width="{fb}"/>
+  <rect x="{24 + fb + 3}" y="{band + stripe + 24 + fb + 3}" width="{TW - 48 - 2 * fb - 6}" height="{mh + 2 * gap - 6:.0f}" fill="none" stroke="#3d2617" stroke-width="2"/>
+  <svg x="{24 + fb + gap}" y="{band + stripe + 24 + fb + gap}" width="{mw:.0f}" height="{mh:.0f}" viewBox="{vx} {vy} {vw} {vh}">{body}</svg>
   <rect width="{TW}" height="{TH}" filter="url(#grain)" opacity=".5" pointer-events="none"/>
 </g>
 </svg>'''
