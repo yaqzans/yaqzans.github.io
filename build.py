@@ -391,29 +391,32 @@ def blob(cx, cy, rx, ry, amp, seed, n=40):
 
 
 # water: channels of even width, straight runs and 45 degree turns, soft corners, a darker edge
-RIVERS = [  # (points, width): one land, a river and its branches splitting it into districts
-    ([(-200, 465), (260, 465), (300, 505), (560, 505), (590, 490), (1060, 490), (1100, 470), (1400, 470),
-      (1440, 500), (2000, 500)], 58),                                                            # the main river
-    ([(595, 495), (595, 420), (565, 390), (565, 245), (605, 205), (605, -200)], 38),            # north, past Vision
-    ([(-200, 222), (565, 222)], 34),                                                             # west, cutting off Data
-    ([(1110, 480), (1110, 430), (1080, 400), (1080, -200)], 38),                                 # north, past Web & Games
-    ([(595, 495), (595, 570), (625, 600), (625, 790), (590, 825), (590, 1200)], 38),             # south, past Research
-    ([(1100, 480), (1100, 640), (1118, 658), (1118, 1200)], 34),                                 # south, past Systems
-]
-WATER, WATER_EDGE = "#cfe6ef", "#86c2db"
+# land and water like a harbour city: the water is the background, the land is two big shapes with
+# straight coasts, 45 degree corners and soft bends; a harbour runs between them and narrows to a strait
+# in the west, an inlet cuts off the Data corner, and a bay reaches up from the south
+NORTH = [(40, 250), (600, 250), (640, 210), (640, -300), (1720, -300), (1720, 100), (1790, 170), (1790, 400),
+         (1500, 400), (1455, 445), (620, 445), (580, 485), (40, 485)]
+DATA_ISLE = [(95, 45), (560, 45), (600, 85), (600, 165), (565, 200), (95, 200), (60, 165), (60, 80)]
+SOUTH = [(10, 560), (545, 560), (565, 580), (565, 760), (590, 785), (615, 760), (615, 560), (635, 540), (1460, 540),
+         (1500, 580), (1820, 580), (1820, 1300), (1160, 1300), (1160, 880), (1125, 845), (1105, 845), (1070, 880),
+         (1070, 1300), (10, 1300)]
+WATER = "#c4dfeb"
 
 
-def river_paths():
-    return [(rounded(pts, 70), w) for pts, w in RIVERS]
+def land_path(pts):
+    """Closed shape with every corner softened."""
+    loop = pts + pts[:2]
+    d = rounded(loop, 26)
+    return d[d.index("Q") - 0:] if False else rounded(pts + [pts[0], pts[1]], 26) + "Z"
+
+
+LAND_PATHS = [land_path(NORTH), land_path(DATA_ISLE), land_path(SOUTH)]
 
 
 def zones():
-    """Plain land, the rivers on it, and district names."""
-    o = [f'<rect x="-600" y="-600" width="{W + 1600}" height="{H + 1600}" fill="{BG}"/>']
-    for d, w in river_paths():
-        o.append(f'<path d="{d}" fill="none" stroke="{WATER_EDGE}" stroke-width="{w + 7}" stroke-linejoin="round"/>')
-    for d, w in river_paths():
-        o.append(f'<path d="{d}" fill="none" stroke="{WATER}" stroke-width="{w}" stroke-linejoin="round"/>')
+    """Water everywhere, the land on top, district names on the land."""
+    o = [f'<rect x="-600" y="-600" width="{W + 1600}" height="{H + 1600}" fill="{WATER}"/>']
+    o += [f'<path d="{d}" fill="{BG}"/>' for d in LAND_PATHS]
     for name, x0, y0, x1, y1, corner in REGIONS:
         x, anchor = (x0 + 26, "start") if corner[1] == "l" else (x1 - 26, "end")
         y = y0 + 40 if corner[0] == "t" else y1 - 18
@@ -422,10 +425,9 @@ def zones():
 
 
 def bridges():
-    """Over water a line turns into a dashed crossing, like the game."""
-    m = "".join(f'<path d="{d}" fill="none" stroke="#fff" stroke-width="{w + 7}"/>' for d, w in river_paths())
-    o = [f'<mask id="water" maskUnits="userSpaceOnUse" x="-600" y="-600" width="{W + 1600}" height="{H + 1600}">{m}</mask>']
-    return "".join(o)
+    m = "".join(f'<path d="{d}" fill="#000"/>' for d in LAND_PATHS)
+    return (f'<mask id="water" maskUnits="userSpaceOnUse" x="-600" y="-600" width="{W + 1600}" height="{H + 1600}">'
+            f'<rect x="-600" y="-600" width="{W + 1600}" height="{H + 1600}" fill="#fff"/>{m}</mask>')
 
 
 def crossings():
@@ -592,7 +594,8 @@ def teaser():
   <text x="{TW - 44}" y="72" text-anchor="end" font-family="{FONT}" font-size="22" font-weight="700" fill="#e8731c">A map of everything I’ve made</text>
   <text x="{TW - 44}" y="98" text-anchor="end" font-family="{FONT}" font-size="17" fill="#bdb3a2">Stops are projects and papers. Lines are the languages behind them.</text>
   {bars}
-  <svg x="{fb + 20}" y="{band + stripe + 30}" width="{mw:.0f}" height="{mh:.0f}" viewBox="{vx} {vy} {vw} {vh}">{body}</svg>
+  <clipPath id="inside"><rect x="{fb}" y="{band + stripe}" width="{TW - 2 * fb}" height="{TH - band - stripe - fb}"/></clipPath>
+  <g clip-path="url(#inside)"><svg x="{fb + 20}" y="{band + stripe + 30}" width="{mw:.0f}" height="{mh:.0f}" viewBox="{vx} {vy} {vw} {vh}" overflow="visible">{body}</svg></g>
   <path d="M{fb / 2},{band + stripe} V{TH - fb / 2} H{TW - fb / 2} V{band + stripe}" fill="none" stroke="#3d2617" stroke-width="{fb}"/>
   <rect width="{TW}" height="{TH}" filter="url(#grain)" opacity=".5" pointer-events="none"/>
 </g>

@@ -36,7 +36,10 @@ body::after { content: ""; position: fixed; inset: 0; pointer-events: none; z-in
 
 .mapside { min-width: 0; min-height: 0; }
 /* one dark brown border running round the edges of the map area */
-.mapframe { width: 100%; height: 100%; border: 16px solid #3d2617; display: grid; place-items: center; padding: 18px 26px; }
+.mapframe { width: 100%; height: 100%; border: 16px solid #3d2617; display: grid; place-items: center; padding: 18px 26px;
+  overflow: hidden; background: var(--paper); }
+/* let the water run on past the drawing, right up to the frame */
+#map { overflow: visible; }
 #map { width: 100%; height: 100%; display: block; }
 
 /* map interaction */
