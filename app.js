@@ -32,7 +32,7 @@ function board(top, dest, when) {
 }
 const IDLE = [
   () => ['yaqzan\'s network', 'pick a stop', ''],
-  () => ['6 lines', 'all running', ''],
+  () => ['6 lines from', 'first day, aiub', ''],
   () => { const s = randomStop(); return [`next: ${DATA.lines[s.lines[0]].name}`, s.name, `${1 + Math.floor(Math.random() * 6)} min`]; },
   () => { const s = randomStop(); return [`next: ${DATA.lines[s.lines[0]].name}`, s.name, `${1 + Math.floor(Math.random() * 6)} min`]; },
 ];
@@ -214,7 +214,7 @@ let focused = null;
 function focusLine(id) {
   focused = id;
   map.classList.toggle('focus', !!id);
-  map.querySelectorAll('.line, .cap, .badge').forEach(n => n.classList.toggle('hl', n.dataset.line === id));
+  map.querySelectorAll('.line, .cap, .badge, .glow').forEach(n => n.classList.toggle('hl', n.dataset.line === id));
   document.querySelectorAll('.ldot').forEach(b => b.classList.toggle('on', b.dataset.line === id));
 }
 document.querySelectorAll('.ldot').forEach(b => b.addEventListener('click', e => {
@@ -241,9 +241,9 @@ function mShow(lineId) {
       const st = DATA.stations[sid];
       const links = st.links.map(([label, url]) =>
         `<a href="${esc(url)}"${url.startsWith('http') ? ' target="_blank" rel="noopener"' : ''}>${esc(label)} ↗</a>`).join('');
-      return `<div class="m-stop${sid === 'aiub' ? ' hub' : ''}" data-id="${esc(sid)}" tabindex="0" role="button">
+      return `<div class="m-stop${sid === 'start' ? ' hub' : ''}" data-id="${esc(sid)}" tabindex="0" role="button">
         <span class="dot"></span>
-        <div><div class="name">${esc(sid === 'aiub' ? 'AIUB' : st.name)}</div><div class="tag">${esc(st.tag)}</div></div>
+        <div><div class="name">${esc(st.name)}</div><div class="tag">${esc(st.tag)}</div></div>
         <div class="more">${esc(st.text)}${links ? `<div class="links">${links}</div>` : ''}</div>
       </div>`;
     }).join('')}</div>`;

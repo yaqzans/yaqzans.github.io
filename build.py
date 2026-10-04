@@ -1,117 +1,173 @@
-"""Build yaqzan's network map.
+"""Build yaqzan's metro.
 
-Everything on the map lives in this file: stations, lines, what each card says.
-Edit it and run `python build.py`. It writes index.html (the map is baked in
-as SVG, app.js only animates it) and the teaser for the profile README in
-../yaqzans/assets/map.svg.
+The map is a timeline. Left to right is time, from the first day at aiub in
+summer 2023 to graduation in january 2027. Every line leaves the first-day
+station together and peels off in the semester that thread began; each stop
+sits in the semester it happened. Lines only meet where one thing led to
+another.
 
-Lines are lists of stations and (x, y) waypoints, so a line can wander like a
-real one. Where two lines run between the same two stations they share track
-and are drawn side by side; stations served by more than one line get an
-interchange marker.
+Everything lives in this file. Edit it and run `python build.py`. It writes
+index.html (the map is baked in as SVG, app.js animates it) and the teaser for
+the profile README in ../yaqzans/assets/map.svg.
 """
 import hashlib
 import json
 import math
 import os
 
+# --------------------------------------------------------------------------
+# time: semesters left to right. width = how many stops one line needs there
+# --------------------------------------------------------------------------
+SEMS = [("su23", 1), ("f23", 1), ("sp24", 1), ("su24", 1), ("f24", 1), ("sp25", 1), ("su25", 1),
+        ("f25", 1), ("sp26", 2), ("su26", 2), ("f26", 1), ("j27", 1)]
+YEAR_OF = {"su23": 2023, "f23": 2023, "sp24": 2024, "su24": 2024, "f24": 2024, "sp25": 2025, "su25": 2025,
+           "f25": 2025, "sp26": 2026, "su26": 2026, "f26": 2026, "j27": 2027}
+SLOT, X0 = 165, 140
+SEM_X = {}
+_x = X0
+for _s, _n in SEMS:
+    SEM_X[_s] = (_x, _n)
+    _x += _n * SLOT
+X_END = _x
+NOW_X = SEM_X["f26"][0] + SLOT * .55          # early october 2026
+
+
+def col(sem, slot=0):
+    x0, n = SEM_X[sem]
+    return round(x0 + (slot + .5) * SLOT)
+
+
+# lanes, from the trunk. lines above the trunk peel upwards, below downwards
+TY = 520
+LANE = {"yellow": TY - 310, "cyan": TY - 150, "aiub": TY, "red": TY + 150, "green": TY + 290, "blue": TY + 430}
+BUNDLE = {"yellow": -24, "cyan": -12, "aiub": 0, "red": 12, "green": 24, "blue": 36}   # side by side on the trunk
+
 
 # --------------------------------------------------------------------------
-# stations. tag = the line printed under the name on the map.
-# side = where the name goes: r, l, t, b
+# stations. tag = the line printed under the name. side = where the name goes
 # --------------------------------------------------------------------------
-def st(name, tag, x, y, side, text, links=(), related=()):
-    return dict(name=name, tag=tag, x=x, y=y, side=side, text=text, links=list(links), related=list(related))
+def st(name, tag, sem, slot, lane, side, text, links=(), related=()):
+    return dict(name=name, tag=tag, sem=sem, x=col(sem, slot), y=LANE[lane], side=side, text=text,
+                links=list(links), related=list(related))
 
 
 S = {
-    "aiub": st("AIUB", "bsc cse, class of 2027", 900, 500, "tl",
-               "american international university-bangladesh. bsc in computer science and engineering, major in "
-               "computational theory, minor in data science. cgpa 3.96, dean's list twice, on an academic "
-               "scholarship. most lines on this map pass through here."),
+    # the aiub line, through the middle
+    "start": st("first day, AIUB", "summer 2023", "su23", 0, "aiub", "l",
+                "started a bsc in computer science and engineering at american international university-bangladesh, "
+                "major in computational theory, minor in data science. every line on this map leaves from here."),
+    "dl1": st("dean's list", "spring 2023-24", "sp24", 0, "aiub", "t",
+              "dean's list honour award, spring 2023-24. on an academic scholarship the whole way."),
+    "dl2": st("dean's list again", "fall 2024-25", "f24", 0, "aiub", "t",
+              "dean's list honour award, fall 2024-25. cgpa 3.96."),
+    "thesis": st("thesis", "final year, in progress", "su26", 1, "aiub", "t",
+                 "final-year thesis on reliable machine learning evaluation. not public yet."),
+    "grad": st("graduation", "january 2027", "j27", 0, "aiub", "t",
+               "end of the line. bsc cse done in january 2027."),
 
-    # machine learning, shared with language from aiub to medease
-    "vehicle": st("vehicle recognition", "yolo + convnext", 340, 500, "t",
+    # out & about
+    "poster": st("poster competition", "aiub, summer 2023", "su23", 0, "yellow", "t",
+                 "selected participant in the aiub poster presentation competition, first semester."),
+    "english": st("english club", "organiser, 10+ events", "f23", 0, "yellow", "b",
+                  "organiser and content writer at the aiub english club. 10+ events and workshops, 50+ members."),
+    "embassy": st("u.s. embassy", "ai workshop", "su24", 0, "yellow", "t",
+                  "ai workshop at the american center, dhaka. the faculty of science and technology sent me to "
+                  "represent aiub."),
+    "undp": st("undp roundtable", "youth and the sdgs", "sp26", 0, "yellow", "b",
+               "picked to represent aiub at let's talk with the undp resident representative, a roundtable on "
+               "youth and the sdgs."),
+
+    # software
+    "parking": st("2d parking", "opengl game", "su25", 0, "cyan", "t",
+                  "park the car before the timer runs out. opengl and glut, computer graphics course.",
+                  [("repo", "https://github.com/yaqzans/2D-Parking-Game")]),
+    "survey": st("needsurveyresponses", "survey credits, php", "f25", 0, "cyan", "b",
+                 "answer other people's surveys to earn credits, spend credits to post your own. php, mysql, "
+                 "separate user and admin sides."),
+    "ttt": st("tictactoe ∞", "4 pieces, then move them", "sp26", 0, "cyan", "t",
+              "tic-tac-toe where you only get 4 pieces, then you have to move them. has a bot with a "
+              "difficulty slider.",
+              [("play", "https://yaqzans.github.io/TicTacToeInfinity/"),
+               ("repo", "https://github.com/yaqzans/TicTacToeInfinity")]),
+    "md": st("markdown converter", "anything to markdown", "su26", 1, "cyan", "b",
+             "pdf, word, powerpoint or excel in, clean markdown out. one windows exe, nothing to install.",
+             [("repo", "https://github.com/yaqzans/markdown-converter-app")]),
+    "who": st("who should count more", "voting sim, playable", "f26", 0, "cyan", "t",
+              "should educated votes count more? set it up, run the election, see who wins.",
+              [("play", "https://yaqzans.github.io/who-should-count-more/"),
+               ("repo", "https://github.com/yaqzans/who-should-count-more")]),
+
+    # machine learning
+    "medease": st("medease bd", "offline medicine llm", "sp26", 0, "red", "b",
+                  "medicine assistant in english, bangla and banglish. rag over 21,000+ medicines plus a gemma 3 4b "
+                  "fine-tuned on 36,000+ medicine q&a pairs, running fully offline."),
+    "oshud": st("oshudbot", "bangla medicine bot", "sp26", 1, "red", "t",
+                "the light version of medease. 21,714 brands, answers in about 15 ms on a cpu. it used to carry "
+                "1.1 gb of models, swapped them for transliteration and fuzzy matching and lost nothing.",
+                [("repo", "https://github.com/yaqzans/oshudbot"), ("try it", "https://oshudbot.streamlit.app/")],
+                ["medease"]),
+    "vehicle": st("vehicle recognition", "yolo + convnext", "su26", 0, "red", "b",
                   "bangladeshi road vehicles on rsud20k. yolo26n finds them, convnext-tiny names every crop. code, "
                   "results and the paper.",
                   [("repo", "https://github.com/yaqzans/cvpr-two-stage-vehicle-recognition")]),
-    "sarcasm": st("sarcasm detection", "bag of words vs tf-idf", 1080, 500, "t",
+    "sarcasm": st("sarcasm detection", "bag of words vs tf-idf", "su26", 1, "red", "t",
                   "can a classifier tell when a tweet is being sarcastic? bag of words vs tf-idf across four "
                   "classifiers, in r.", [("repo", "https://github.com/yaqzans/ids-sarcasm-detection")]),
-    "oshud": st("oshudbot", "bangla medicine bot", 1260, 500, "b",
-                "21,714 medicine brands, ask in bangla, english or banglish. answers in about 15 ms on a cpu. it "
-                "used to carry 1.1 gb of models, swapped them for transliteration and fuzzy matching and lost "
-                "nothing.",
-                [("repo", "https://github.com/yaqzans/oshudbot"), ("try it", "https://oshudbot.streamlit.app/")]),
-    "medease": st("medease bd", "offline medicine llm", 1480, 500, "b",
-                  "the heavier sibling of oshudbot. rag over 21,000+ medicines plus a gemma 3 4b fine-tuned on "
-                  "36,000+ medicine q&a pairs, running fully offline.", [], ["oshud"]),
 
-    # hardware, crossing the network north to south-east
-    "hand": st("robotic hand", "esp32 + mediapipe, ieee qpain 2026", 680, 300, "b",
+    # hardware
+    "hand": st("robotic hand", "became the qpain paper", "f25", 0, "green", "b",
                "a camera watches your hand and a 7-servo robotic hand copies it. no gloves, no sensors. 88 ms end "
                "to end at 24.6 fps, built for about 2,800 taka. it became a paper: Gesture Controlled Robotic Hand "
                "Designed for Enhancing Industrial Automation and Innovation, ieee qpain 2026, second and "
                "corresponding author.",
                [("read the paper", "https://doi.org/10.1109/QPAIN69676.2026.11545528")]),
-    "pm25": st("pm2.5 monitor", "air quality alerts, esp32", 1060, 300, "t",
+    "pm25": st("pm2.5 monitor", "air quality alerts, esp32", "sp26", 1, "green", "b",
                "pocket air quality monitor plus a react native app. it only alerts on real spikes, not on dhaka's "
                "normal bad air. two weeks of field testing: about 4 alerts a day instead of dozens, and people "
                "actually read them."),
 
     # papers
-    "blood": st("blood-like solution", "analytical chemistry letters 2025", 540, 160, "t",
-                "Development of a Simulated Blood-Like Solution for Medical Experiments. analytical chemistry "
-                "letters, 2025. first shown at the international conference on physics 2024. fifth author.",
-                [("read the paper", "https://doi.org/10.1080/22297928.2025.2533331")]),
-    "agile": st("agile + waterfall", "ieom bangladesh 2025", 340, 160, "l",
+    "blood": st("blood-like solution", "physics conf 2024, journal 2025", "su24", 0, "blue", "b",
+                "Development of a Simulated Blood-Like Solution for Medical Experiments. presented at the "
+                "international conference on physics 2024, published in analytical chemistry letters 2025. "
+                "fifth author.", [("read the paper", "https://doi.org/10.1080/22297928.2025.2533331")]),
+    "hybrid": st("human-ai animation", "icctass 2025", "sp25", 0, "blue", "t",
+                 "A Hybrid Human-AI Model for Sustainable Innovation in Media and Animation. presented at icctass "
+                 "2025. third author."),
+    "agile": st("agile + waterfall", "ieom bangladesh 2025", "su25", 0, "blue", "b",
                 "Evaluating the Performance of Agile-Waterfall Integrated Approaches in Large Scale Engineering "
                 "Projects in Bangladesh. ieom bangladesh 2025. fifth author.",
                 [("read the paper", "https://doi.org/10.46254/BA08.20250467")]),
-    "hybrid": st("human-ai animation", "icctass 2025", 200, 300, "l",
-                 "A Hybrid Human-AI Model for Sustainable Innovation in Media and Animation. presented at icctass "
-                 "2025. third author."),
-
-    # out & about
-    "english": st("english club", "organiser, 10+ events", 620, 800, "b",
-                  "organiser and content writer at the aiub english club. 10+ events and workshops, 50+ members."),
-    "undp": st("undp roundtable", "youth and the sdgs", 900, 800, "b",
-               "picked to represent aiub at let's talk with the undp resident representative, a roundtable on "
-               "youth and the sdgs."),
-    "embassy": st("u.s. embassy", "ai workshop", 900, 160, "r",
-                  "ai workshop at the american center, dhaka. the faculty of science and technology sent me to "
-                  "represent aiub."),
-
-    # side projects
-    "md": st("markdown converter", "anything to markdown", 1080, 680, "b",
-             "pdf, word, powerpoint or excel in, clean markdown out. one windows exe, nothing to install.",
-             [("repo", "https://github.com/yaqzans/markdown-converter-app")]),
-    "who": st("who should count more", "voting sim, playable", 1240, 680, "t",
-              "should educated votes count more? set it up, run the election, see who wins.",
-              [("play", "https://yaqzans.github.io/who-should-count-more/"),
-               ("repo", "https://github.com/yaqzans/who-should-count-more")]),
-    "ttt": st("tictactoe ∞", "4 pieces, then move them", 1500, 790, "b",
-              "tic-tac-toe where you only get 4 pieces, then you have to move them. has a bot with a "
-              "difficulty slider.",
-              [("play", "https://yaqzans.github.io/TicTacToeInfinity/"),
-               ("repo", "https://github.com/yaqzans/TicTacToeInfinity")]),
 }
+# the robotic hand is where hardware and papers meet: it sits between their lanes
+S["hand"]["y"] = (LANE["green"] + LANE["blue"]) // 2 - 10
 
-# lines: id -> (name, color, route). a route is station ids and (x, y) waypoints;
-# the arrow goes on the last stop.
+
+def peel(lid, first):
+    """Leave the first-day station in the bundle, run along the trunk, then turn off to the line's lane
+    so the line reaches its lane just before its first stop."""
+    off, lane = BUNDLE[lid], LANE[lid]
+    fx, fy = S[first]["x"], S[first]["y"]
+    dy = fy - (TY + off)
+    turn = fx - abs(dy) - 40
+    return [("start", off), (turn, TY + off)]
+
+
+# lines: id -> (name, color, route). a route is station ids, (station, dy) for a station
+# passed off-centre, and (x, y) waypoints. the arrow goes on the end.
 L = {
-    "red":    ("machine learning", "#dc241f", ["vehicle", "aiub", "sarcasm", "oshud", "medease"]),
-    "pink":   ("language", "#d6559b", ["english", "aiub", "sarcasm", "oshud", "medease", (1600, 380)]),
-    "blue":   ("papers", "#0019a8", ["hand", "blood", "agile", "hybrid"]),
-    "green":  ("hardware", "#00843d", ["hand", "pm25", (1375, 300), (1375, 880)]),
-    "yellow": ("out & about", "#e8a200", ["english", "undp", "aiub", "embassy"]),
-    "cyan":   ("side projects", "#0098d4", ["aiub", "md", "who", "ttt"]),
+    "aiub":   ("aiub", "#e9edf5", ["start", "dl1", "dl2", "thesis", "grad"]),
+    "yellow": ("out & about", "#ffb21e", [("start", -24), "poster", "english", "embassy", "undp",
+                                          (NOW_X + 60, LANE["yellow"])]),
+    "cyan":   ("software", "#28b8f0", peel("cyan", "parking") + ["parking", "survey", "ttt", "md", "who"]),
+    "red":    ("machine learning", "#ff4a3d", peel("red", "medease") + ["medease", "oshud", "vehicle", "sarcasm"]),
+    "green":  ("hardware", "#2fd26f", peel("green", "hand") + ["hand", "pm25"]),
+    "blue":   ("papers", "#5b7bff", peel("blue", "blood") + ["blood", "hybrid", "agile", (S["hand"]["x"] - 130, LANE["blue"]),
+                                                             "hand", (S["hand"]["x"] + 70, S["hand"]["y"]), (S["hand"]["x"] + 260, LANE["blue"])]),
 }
 
-RIVER = "M-60,610 C120,600 220,560 330,600 S470,700 560,690 S700,600 800,610 S960,640 1040,620 S1200,560 1300,620 S1500,720 1720,700"
-
-W, H = 1600, 960
-INK, PAPER, SOFT, RIVERC = "#1d1d1f", "#ffffff", "#6e6e73", "#d4ebf7"
+W, H = X_END + 200, 1000
+BG, PANEL, INK, SOFT, ZONE = "#0b0d12", "#11141b", "#eef1f7", "#8a93a6", "#151924"
 FONT = "Inter,'Helvetica Neue',Arial,sans-serif"
 LW = 7      # line width
 GAP = 2.5   # space between lines sharing track
@@ -120,12 +176,24 @@ GAP = 2.5   # space between lines sharing track
 # --------------------------------------------------------------------------
 # geometry
 # --------------------------------------------------------------------------
+def is_stop(tok):
+    return isinstance(tok, str) or (isinstance(tok, tuple) and isinstance(tok[0], str))
+
+
+def sid_of(tok):
+    return tok if isinstance(tok, str) else tok[0]
+
+
 def pos(tok):
-    return (S[tok]["x"], S[tok]["y"]) if isinstance(tok, str) else tok
+    if isinstance(tok, str):
+        return (S[tok]["x"], S[tok]["y"])
+    if isinstance(tok[0], str):
+        return (S[tok[0]]["x"], S[tok[0]]["y"] + tok[1])
+    return tok
 
 
 def stations_of(lid):
-    return [t for t in L[lid][2] if isinstance(t, str)]
+    return [sid_of(t) for t in L[lid][2] if is_stop(t)]
 
 
 def lines_at(sid):
@@ -138,13 +206,12 @@ def leg(a, b):
     dx, dy = x2 - x1, y2 - y1
     d = min(abs(dx), abs(dy))
     sx, sy = (dx > 0) - (dx < 0), (dy > 0) - (dy < 0)
-    if d == 0 or abs(dx) == abs(dy):
+    if d < .01 or abs(abs(dx) - abs(dy)) < .01:
         return [a, b]
     return [a, (x1 + sx * d, y1 + sy * d), b]
 
 
 def shared():
-    """Which lines run between the same two stations, in a fixed order."""
     use = {}
     for lid, (_, _, r) in L.items():
         for a, b in zip(r, r[1:]):
@@ -157,7 +224,6 @@ SHARED = shared()
 
 
 def offset_poly(pts, o):
-    """Shift a polyline sideways by o, keeping the corners sharp (mitre)."""
     if o == 0:
         return list(pts)
     segs = []
@@ -179,7 +245,6 @@ def offset_poly(pts, o):
 
 
 def line_points(lid):
-    """The polyline actually drawn for a line, with shared track pushed apart."""
     r = L[lid][2]
     pts = []
     for a, b in zip(r, r[1:]):
@@ -202,7 +267,7 @@ def line_points(lid):
     return clean
 
 
-def rounded(pts, r=34):
+def rounded(pts, r=30):
     d = f"M{pts[0][0]:.1f},{pts[0][1]:.1f}"
     for i in range(1, len(pts) - 1):
         (ax, ay), (bx, by), (cx, cy) = pts[i - 1], pts[i], pts[i + 1]
@@ -222,47 +287,41 @@ def esc(s):
 
 
 def where_lines_pass(sid):
-    """Points where each line serving a station actually passes it."""
     x, y = S[sid]["x"], S[sid]["y"]
     out = []
     for lid in lines_at(sid):
-        pts = line_points(lid)
-        out.append(min(pts, key=lambda p: math.dist(p, (x, y))))
+        for tok in L[lid][2]:
+            if is_stop(tok) and sid_of(tok) == sid:
+                out.append(pos(tok))
     return out
 
 
 def marker_box(sid):
-    """(x0, y0, x1, y1) of the station marker."""
     x, y = S[sid]["x"], S[sid]["y"]
-    n = len(lines_at(sid))
-    if n == 1:
+    if len(lines_at(sid)) == 1:
         return (x - 8, y - 8, x + 8, y + 8)
     ps = where_lines_pass(sid)
     xs, ys = [p[0] for p in ps], [p[1] for p in ps]
-    pad = 12 if sid != "aiub" else 15
-    return (min(xs) - pad, min(ys) - pad, max(xs) + pad, max(ys) + pad)
+    return (min(xs) - 12, min(ys) - 12, max(xs) + 12, max(ys) + 12)
 
 
 def marker(sid):
     x0, y0, x1, y1 = marker_box(sid)
     if len(lines_at(sid)) == 1:
-        return f'<circle class="sh" cx="{S[sid]["x"]}" cy="{S[sid]["y"]}" r="8" fill="#fff" stroke="{INK}" stroke-width="2.8"/>'
+        return f'<circle class="sh" cx="{S[sid]["x"]}" cy="{S[sid]["y"]}" r="8" fill="{BG}" stroke="#fff" stroke-width="3"/>'
     w, h = x1 - x0, y1 - y0
-    r = min(w, h) / 2
-    return (f'<rect class="sh" x="{x0:.1f}" y="{y0:.1f}" width="{w:.1f}" height="{h:.1f}" rx="{r:.1f}" '
-            f'fill="#fff" stroke="{INK}" stroke-width="{3.6 if sid == "aiub" else 3}"/>')
+    return (f'<rect class="sh" x="{x0:.1f}" y="{y0:.1f}" width="{w:.1f}" height="{h:.1f}" rx="{min(w, h) / 2:.1f}" '
+            f'fill="{BG}" stroke="#fff" stroke-width="3.4"/>')
 
 
 def label(sid):
     s = S[sid]
     x, y, side = s["x"], s["y"], s["side"]
     x0, y0, x1, y1 = marker_box(sid)
-    big = " hubname" if sid == "aiub" else ""
     nx, ny, anchor = {"r": (x1 + 8, y + 1, "start"), "l": (x0 - 8, y + 1, "end"),
-                      "t": (x, y0 - 28, "middle"), "b": (x, y1 + 22, "middle"),
-                      "tl": (x0 - 4, y0 - 26, "end")}[side]
-    return (f'<text x="{nx:.0f}" y="{ny:.0f}" text-anchor="{anchor}" class="lbl{big}">{esc(s["name"])}</text>'
-            f'<text x="{nx:.0f}" y="{ny + 19:.0f}" text-anchor="{anchor}" class="tag">{esc(s["tag"])}</text>')
+                      "t": (x, y0 - 34, "middle"), "b": (x, y1 + 26, "middle")}[side]
+    return (f'<text x="{nx:.0f}" y="{ny:.0f}" text-anchor="{anchor}" class="lbl">{esc(s["name"])}</text>'
+            f'<text x="{nx:.0f}" y="{ny + 22:.0f}" text-anchor="{anchor}" class="tag">{esc(s["tag"])}</text>')
 
 
 def end_dir(lid):
@@ -273,7 +332,6 @@ def end_dir(lid):
 
 
 def arrow(lid):
-    """The line runs on past its last stop into an arrowhead."""
     color = L[lid][1]
     (x2, y2), (ux, uy) = end_dir(lid)
     sx, sy = x2 + ux * 30, y2 + uy * 30
@@ -299,46 +357,73 @@ def badge_box(lid):
 
 def line_badge(lid):
     name, color, cx, cy, w = badge_box(lid)
-    return (f'<g class="badge" data-line="{lid}"><rect x="{cx - w / 2:.0f}" y="{cy - 13:.0f}" width="{w:.0f}" height="26" rx="2" fill="{color}"/>'
-            f'<text x="{cx:.0f}" y="{cy + 5:.0f}" text-anchor="middle" fill="#fff" font-family="{FONT}" font-size="14" '
+    dark = "#0b0d12" if lid in ("aiub", "yellow") else "#fff"
+    return (f'<g class="badge" data-line="{lid}"><rect x="{cx - w / 2:.0f}" y="{cy - 13:.0f}" width="{w:.0f}" height="26" rx="3" fill="{color}"/>'
+            f'<text x="{cx:.0f}" y="{cy + 5:.0f}" text-anchor="middle" fill="{dark}" font-family="{FONT}" font-size="14" '
             f'font-weight="700" letter-spacing=".6">{esc(name.upper())}</text></g>')
 
 
 def view():
-    """Bounding box of everything drawn, with a margin: the part of the canvas the poster shows."""
-    xs = [v["x"] for v in S.values()]
-    ys = [v["y"] for v in S.values()]
-    for sid, v in S.items():          # rough label extents, so no name gets cut off
-        x0, _, x1, _ = marker_box(sid)
-        w = max(len(v["name"]) * 10, len(v["tag"]) * 7.6)
-        if v["side"] in ("l", "tl"):
+    xs = [X0 - 40, X_END + 40]
+    ys = []
+    for sid, v in S.items():
+        x0, y0, x1, y1 = marker_box(sid)
+        w = max(len(v["name"]) * 13, len(v["tag"]) * 9)
+        if v["side"] == "l":
             xs.append(x0 - 8 - w)
-        elif v["side"] == "r":
-            xs.append(x1 + 8 + w)
         else:
             xs += [v["x"] - w / 2, v["x"] + w / 2]
+        ys += [y0 - 66, y1 + 66]
     for lid in L:
         _, _, cx, cy, w = badge_box(lid)
         xs += [cx - w / 2, cx + w / 2]
         ys += [cy - 14, cy + 14]
-        for p in line_points(lid):
-            xs.append(p[0]); ys.append(p[1])
-    x0, x1 = min(xs) - 30, max(xs) + 30
-    y0, y1 = min(ys) - 64, max(ys) + 70
-    return (round(x0), round(y0), round(x1 - x0), round(y1 - y0))
+    y0 = min(ys) - 70      # room for the year labels
+    return (round(min(xs) - 30), round(y0), round(max(xs) - min(xs) + 60), round(max(ys) - y0 + 30))
+
+
+def zones():
+    """Years as fare zones: alternate bands, the year written at the top, 'now' and the future."""
+    vx, vy, vw, vh = view()
+    out, years = [], {}
+    for s, n in SEMS:
+        x0, _ = SEM_X[s]
+        y = YEAR_OF[s]
+        a, b = years.get(y, (x0, x0 + n * SLOT))
+        years[y] = (min(a, x0), max(b, x0 + n * SLOT))
+    for i, (yr, (a, b)) in enumerate(sorted(years.items())):
+        if i % 2 == 0:
+            out.append(f'<rect x="{a}" y="{vy}" width="{b - a}" height="{vh}" fill="{ZONE}"/>')
+        out.append(f'<text x="{(a + b) / 2:.0f}" y="{vy + 52}" text-anchor="middle" class="year">{yr}</text>')
+    out.append(f'<rect x="{NOW_X:.0f}" y="{vy}" width="{X_END - NOW_X + 400:.0f}" height="{vh}" fill="url(#future)"/>')
+    out.append(f'<line x1="{NOW_X:.0f}" y1="{vy + 70}" x2="{NOW_X:.0f}" y2="{vy + vh}" stroke="#ffb21e" stroke-width="1.5" stroke-dasharray="4 6" opacity=".7"/>')
+    out.append(f'<text x="{NOW_X + 8:.0f}" y="{vy + 86}" class="now">NOW</text>')
+    return "".join(out)
+
+
+def map_defs():
+    return ('<defs><filter id="glow" x="-5%" y="-30%" width="110%" height="160%"><feGaussianBlur stdDeviation="5"/></filter>'
+            f'<pattern id="future" width="14" height="14" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">'
+            f'<rect width="14" height="14" fill="{BG}" opacity=".35"/><rect width="2" height="14" fill="#fff" opacity=".04"/></pattern></defs>')
 
 
 def map_svg(interactive=True):
-    style = (f"<style>.lbl{{font:500 18.5px {FONT};fill:{INK}}}.hubname{{font-weight:700;font-size:22px;letter-spacing:1px}}"
-             f".tag{{font:400 14.5px {FONT};fill:{SOFT}}}"
-             f".lbl,.tag{{paint-order:stroke;stroke:{PAPER};stroke-width:5px;stroke-linejoin:round}}</style>")
-    o = [style, f'<rect x="-400" y="-400" width="{W + 800}" height="{H + 800}" fill="{PAPER}"/>',
-         f'<path class="river" d="{RIVER}" fill="none" stroke="{RIVERC}" stroke-width="54" stroke-linecap="round"/>']
+    style = (f"<style>.lbl{{font:600 23px {FONT};fill:{INK}}}.tag{{font:400 16.5px {FONT};fill:{SOFT}}}"
+             f".lbl,.tag{{paint-order:stroke;stroke:{BG};stroke-width:5px;stroke-linejoin:round}}"
+             f".year{{font:800 46px {FONT};fill:#232938;letter-spacing:2px}}"
+             f".now{{font:700 17px {FONT};fill:#ffb21e;letter-spacing:3px}}</style>")
+    o = [style, map_defs(), f'<rect x="-600" y="-600" width="{W + 1600}" height="{H + 1600}" fill="{BG}"/>', zones()]
+    for lid, (name, color, _) in L.items():     # glow underneath every line
+        o.append(f'<path class="glow" data-line="{lid}" d="{rounded(line_points(lid))}" fill="none" stroke="{color}" '
+                 f'stroke-width="{LW + 8}" opacity=".55" filter="url(#glow)"/>')
     for lid, (name, color, _) in L.items():
         o.append(f'<path id="L-{lid}" class="line" data-line="{lid}" d="{rounded(line_points(lid))}" fill="none" '
                  f'stroke="{color}" stroke-width="{LW}" stroke-linejoin="round"/>')
         o.append(f'<g class="cap" data-line="{lid}">{arrow(lid)}</g>')
         o.append(line_badge(lid))
+    # the future: the aiub line past 'now' is still being built
+    gx = S["grad"]["x"]
+    o.append(f'<path d="M{NOW_X:.0f},{TY} L{gx + 80},{TY}" stroke="{BG}" stroke-width="{LW + 2}" stroke-dasharray="9 9"/>')
     o.append('<g id="trains"></g>')
     for sid, s in S.items():
         attrs = (f' class="stn" data-id="{sid}" tabindex="0" role="button" aria-label="{esc(s["name"])}: {esc(s["tag"])}"'
@@ -373,7 +458,7 @@ def clock_svg():
 
 def board_html():
     return ('<div class="board" aria-live="polite"><div class="screen">'
-            '<div class="led"><span class="led1">yaqzan\'s network</span></div>'
+            '<div class="led"><span class="led1">yaqzan\'s metro</span></div>'
             '<div class="led row"><span class="led2">pick a stop</span><span class="led3"></span></div>'
             '</div></div>')
 
@@ -401,8 +486,8 @@ def page():
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>yaqzan's network map</title>
-<meta name="description" content="my projects, papers and the rest, as a network map. pick a stop and a train takes you there.">
+<title>yaqzan's metro</title>
+<meta name="description" content="everything i have done since 2023, as a metro map. pick a stop and a train takes you there.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Doto:wght@800;900&display=swap" rel="stylesheet">
@@ -428,8 +513,8 @@ def page():
 
     <div class="howto">
       <h2>how to read this map</h2>
-      <p>each coloured line is one part of what i do. each stop is one thing: a project, a paper, an event. where lines meet, the two things are connected.</p>
-      <p>pick a stop and a train takes you there, with the details and the links.</p>
+      <p>left to right is time, from my first day at aiub in 2023 to graduating in 2027. every line leaves from that first day and branches off when that thread started.</p>
+      <p>where two lines meet, one thing led to the other. pick a stop and a train takes you there.</p>
     </div>
 
     <nav class="exits" aria-label="links">
@@ -447,12 +532,12 @@ def page():
       <header class="poster-head">
         {roundel()}
         <div>
-          <h1>yaqzan's network map</h1>
-          <p>projects, papers and things i showed up for</p>
+          <h1>yaqzan's metro</h1>
+          <p>every line is one thread of what i've done since 2023. read it left to right, like time.</p>
         </div>
       </header>
       <div id="scroller">
-        <svg id="map" viewBox="{vx} {vy} {vw} {vh}" role="img" aria-label="a network map of yaqzan's projects, papers and activities">
+        <svg id="map" viewBox="{vx} {vy} {vw} {vh}" role="img" aria-label="a metro map of yaqzan's projects, papers and activities since 2023">
 {map_svg()}
         </svg>
       </div>
@@ -485,7 +570,7 @@ def page():
     {roundel(34)}
     <div><b>yaqzan's</b><span>projects, papers and the rest</span></div>
   </header>
-  <p class="m-intro">each line is one part of what i do. pick a line, then tap a stop.</p>
+  <p class="m-intro">every line is one thread, stops in the order they happened. pick a line, then tap a stop.</p>
   <nav class="m-tabs" role="tablist">{m_tabs}</nav>
   <section class="m-route" id="m-route" aria-live="polite"></section>
   <nav class="m-exits" aria-label="links">
@@ -542,15 +627,15 @@ def teaser():
   <mask id="ledmask"><rect width="{TW}" height="{TH}" fill="url(#dots)"/></mask>
   <filter id="glow" x="-10%" y="-60%" width="120%" height="220%"><feGaussianBlur stdDeviation="2.4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
   <linearGradient id="alu" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#dcdde0"/><stop offset=".5" stop-color="#9ea1a6"/><stop offset="1" stop-color="#d2d4d7"/></linearGradient>
-  <linearGradient id="glass" x1="0" y1="0" x2="1" y2="1"><stop offset=".2" stop-color="#fff" stop-opacity="0"/><stop offset=".28" stop-color="#fff" stop-opacity=".16"/><stop offset=".36" stop-color="#fff" stop-opacity="0"/></linearGradient>
+  <linearGradient id="glass" x1="0" y1="0" x2="1" y2="1"><stop offset=".2" stop-color="#fff" stop-opacity="0"/><stop offset=".28" stop-color="#fff" stop-opacity=".05"/><stop offset=".36" stop-color="#fff" stop-opacity="0"/></linearGradient>
   <style>@keyframes b{{50%{{opacity:.1}}}}.blink{{animation:b 1.2s steps(1) infinite}}</style>
 </defs>
 <rect width="{TW}" height="{TH}" rx="10" fill="url(#alu)"/>
 <g transform="translate({pad} {pad})">
-  <rect width="{pw}" height="{ph:.0f}" fill="#fff"/>
+  <rect width="{pw}" height="{ph:.0f}" fill="{BG}"/>
   <svg x="24" y="22" width="52" height="52" viewBox="-30 -30 60 60"><circle r="22" fill="none" stroke="#dc241f" stroke-width="9"/><rect x="-29" y="-6" width="58" height="12" fill="#0019a8"/></svg>
-  <text x="92" y="50" font-family="{FONT}" font-size="34" font-weight="700" fill="{INK}" letter-spacing="-.5">yaqzan's network map</text>
-  <text x="93" y="76" font-family="{FONT}" font-size="17" fill="{SOFT}">projects, papers and things i showed up for. click the map to ride it.</text>
+  <text x="92" y="50" font-family="{FONT}" font-size="34" font-weight="700" fill="{INK}" letter-spacing="-.5">yaqzan's metro</text>
+  <text x="93" y="76" font-family="{FONT}" font-size="17" fill="{SOFT}">everything since 2023, left to right. click the map to ride it.</text>
   <g transform="translate({bx} 16)">
     <rect width="{bw}" height="64" rx="3" fill="#0b0b0b" stroke="#333" stroke-width="3"/>
     <rect x="6" y="6" width="{bw - 12}" height="52" fill="url(#unlit)"/>
@@ -559,9 +644,9 @@ def teaser():
       <text x="{bw - 18}" y="44" font-size="30" text-anchor="end" class="blink">now boarding</text>
     </g></g>
   </g>
-  <line x1="0" y1="{head}" x2="{pw}" y2="{head}" stroke="#d7d7db" stroke-width="2"/>
+  <line x1="0" y1="{head}" x2="{pw}" y2="{head}" stroke="#232938" stroke-width="2"/>
   <svg x="0" y="{head}" width="{pw}" height="{mh:.0f}" viewBox="{vx} {vy} {vw} {vh}">{body}</svg>
-  <line x1="0" y1="{head + mh:.0f}" x2="{pw}" y2="{head + mh:.0f}" stroke="#d7d7db" stroke-width="2"/>
+  <line x1="0" y1="{head + mh:.0f}" x2="{pw}" y2="{head + mh:.0f}" stroke="#232938" stroke-width="2"/>
   {legend}
   <rect width="{pw}" height="{ph:.0f}" fill="url(#glass)"/>
 </g>
