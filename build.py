@@ -705,5 +705,15 @@ if __name__ == "__main__":
         for old in ("metro-light.svg", "metro-dark.svg"):
             if os.path.exists(os.path.join(prof, old)):
                 os.remove(os.path.join(prof, old))
-        write(os.path.join(prof, "map.svg"), teaser())
+        # github caches readme images by url, so the file gets a new name whenever it changes
+        svg = teaser()
+        name = f"map-{hashlib.sha1(svg.encode()).hexdigest()[:8]}.svg"
+        for old in os.listdir(prof):
+            if old.startswith("map") and old.endswith(".svg") and old != name:
+                os.remove(os.path.join(prof, old))
+        write(os.path.join(prof, name), svg)
+        readme = os.path.join(prof, "..", "README.md")
+        write(readme, f'<a href="https://yaqzans.github.io"><img src="assets/{name}" width="100%" '
+                      'alt="yaqzan&#39;s metro: everything since 2023 as a metro map, time running left to right. '
+                      'click to ride"></a>\n')
     print(f"{len(S)} stations, {len(L)} lines")
