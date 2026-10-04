@@ -394,12 +394,28 @@ def blob(cx, cy, rx, ry, amp, seed, n=40):
 # land and water like a harbour city: the water is the background, the land is two big shapes with
 # straight coasts, 45 degree corners and soft bends; a harbour runs between them and narrows to a strait
 # in the west, an inlet cuts off the Data corner, and a bay reaches up from the south
-NORTH = [(40, 250), (600, 250), (640, 210), (640, -300), (1720, -300), (1720, 100), (1790, 170), (1790, 400),
-         (1500, 400), (1455, 445), (620, 445), (580, 485), (40, 485)]
-DATA_ISLE = [(95, 45), (560, 45), (600, 85), (600, 165), (565, 200), (95, 200), (60, 165), (60, 80)]
-SOUTH = [(10, 560), (545, 560), (565, 580), (565, 760), (590, 785), (615, 760), (615, 560), (635, 540), (1460, 540),
-         (1500, 580), (1820, 580), (1820, 1300), (1160, 1300), (1160, 880), (1125, 845), (1105, 845), (1070, 880),
-         (1070, 1300), (10, 1300)]
+LANDS = [
+    # Data: a small island with a spit reaching east
+    [(90, 50), (470, 50), (510, 90), (600, 90), (630, 120), (600, 150), (520, 150), (490, 190), (90, 190), (60, 160), (60, 80)],
+    # the north-west shore for Natural Language, cut by a little cove
+    [(40, 250), (300, 250), (330, 220), (380, 220), (410, 250), (610, 250), (650, 290), (650, 445), (600, 445),
+     (570, 475), (40, 475)],
+    # the big northern land: Vision, Web & Games; a fjord comes down from the top, the east coast steps out
+    [(690, -300), (1110, -300), (1110, 70), (1140, 100), (1170, 70), (1170, -300), (1760, -300), (1760, 60),
+     (1810, 110), (1810, 360), (1760, 410), (1520, 410), (1480, 450), (1200, 450), (1160, 410), (1000, 410),
+     (960, 450), (690, 450)],
+    # Community: a peninsula off the south-west, with a bite out of its west side
+    [(10, 580), (520, 580), (550, 610), (550, 1300), (10, 1300), (10, 930), (60, 880), (60, 790), (10, 740)],
+    # Research: a long narrow peninsula pointing north into the harbour
+    [(640, 1300), (640, 600), (680, 560), (1010, 560), (1050, 600), (1050, 950), (1010, 990), (1010, 1300)],
+    # Tools: the south-east, with a lake-like bay cut in from the south
+    [(1100, 1300), (1100, 640), (1150, 590), (1460, 590), (1500, 550), (1820, 550), (1820, 1300), (1480, 1300),
+     (1480, 1010), (1440, 970), (1400, 970), (1360, 1010), (1360, 1300)],
+    # small islands
+    [(120, 515), (230, 515), (250, 535), (230, 555), (120, 555), (100, 535)],
+    [(1600, 470), (1680, 470), (1700, 490), (1680, 510), (1600, 510), (1580, 490)],
+    [(1090, 520), (1130, 520), (1140, 540), (1130, 560), (1090, 560), (1080, 540)],
+]
 WATER = "#c4dfeb"
 
 
@@ -410,13 +426,29 @@ def land_path(pts):
     return d[d.index("Q") - 0:] if False else rounded(pts + [pts[0], pts[1]], 26) + "Z"
 
 
-LAND_PATHS = [land_path(NORTH), land_path(DATA_ISLE), land_path(SOUTH)]
+LAND_PATHS = [land_path(p) for p in LANDS]
 
 
 def zones():
     """Water everywhere, the land on top, district names on the land."""
-    o = [f'<rect x="-600" y="-600" width="{W + 1600}" height="{H + 1600}" fill="{WATER}"/>']
-    o += [f'<path d="{d}" fill="{BG}"/>' for d in LAND_PATHS]
+    deep = os.environ.get("TERRAIN", "flat") == "ink"
+    o = [f'<defs><pattern id="hatch" width="9" height="9" patternUnits="userSpaceOnUse">'
+         f'<rect width="9" height="9" fill="#7fb0c8"/><path d="M0 4.5 H9" stroke="#6a9db7" stroke-width="1.6"/></pattern></defs>',
+         f'<rect x="-600" y="-600" width="{W + 1600}" height="{H + 1600}" fill="{"#7fb0c8" if deep else WATER}"/>']
+    style = os.environ.get("TERRAIN", "flat")
+    if style == "ripple":
+        # old chart look: bands of water following the coast, a dark coastline
+        for i, w in enumerate((110, 84, 58, 34)):
+            o += [f'<path d="{d}" fill="none" stroke="{"#a9cbdc" if i % 2 == 0 else WATER}" stroke-width="{w}" '
+                  f'stroke-linejoin="round"/>' for d in LAND_PATHS]
+        o += [f'<path d="{d}" fill="{BG}" stroke="#5b7f93" stroke-width="2.5"/>' for d in LAND_PATHS]
+    elif style == "flat":
+        o += [f'<path d="{d}" fill="{BG}"/>' for d in LAND_PATHS]
+    else:
+        # inked chart: deep water with fine hatching, pale land with a shadow line
+        o.append(f'<rect x="-600" y="-600" width="{W + 1600}" height="{H + 1600}" fill="url(#hatch)"/>')
+        o += [f'<path d="{d}" fill="none" stroke="#2f5d74" stroke-opacity=".35" stroke-width="22" stroke-linejoin="round"/>' for d in LAND_PATHS]
+        o += [f'<path d="{d}" fill="{BG}" stroke="#1f3f52" stroke-width="3"/>' for d in LAND_PATHS]
     for name, x0, y0, x1, y1, corner in REGIONS:
         x, anchor = (x0 + 26, "start") if corner[1] == "l" else (x1 - 26, "end")
         y = y0 + 40 if corner[0] == "t" else y1 - 18
@@ -447,7 +479,7 @@ def map_svg(interactive=True):
              f".lbl,.tag{{paint-order:stroke;stroke:{BG};stroke-width:6px;stroke-linejoin:round}}"
              f".year{{font:800 62px {FONT};fill:#e2ded5;letter-spacing:2px}}"
              f".now{{font:700 18px {FONT};fill:{NOWC};letter-spacing:4px}}"
-             f".district{{font:800 21px {FONT};fill:#b3a283;letter-spacing:5px}}</style>")
+             f".district{{font:800 25px {FONT};fill:#a8946e;letter-spacing:6px}}</style>")
     defs = ('<defs><pattern id="future" width="14" height="14" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">'
             f'<rect width="1.5" height="14" fill="{INK}" opacity=".07"/></pattern></defs>')
     o = [style, defs, zones(), bridges()]
