@@ -8,6 +8,7 @@ as SVG, app.js only animates it) and the teaser for the profile README in
 The map is a hub: every line starts at aiub and runs out to one part of my
 work, so it reads at a glance without clicking anything.
 """
+import hashlib
 import json
 import math
 import os
@@ -268,6 +269,12 @@ def roundel(size=44):
             f'<rect x="-29" y="-6" width="58" height="12" fill="#0019a8"/></svg>')
 
 
+def stamp(path):
+    """Short content hash, so browsers fetch the new file after every deploy."""
+    with open(path, "rb") as f:
+        return hashlib.sha1(f.read()).hexdigest()[:8]
+
+
 def page():
     legend = "".join(f'<button class="ldot" data-line="{lid}" style="--c:{c}"><i></i>{esc(n)}</button>'
                      for lid, (n, c, _) in L.items())
@@ -282,7 +289,7 @@ def page():
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Doto:wght@800;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="style.css?v={stamp('style.css')}">
 </head>
 <body>
 
@@ -355,7 +362,7 @@ def page():
 </aside>
 
 <script id="data" type="application/json">{data_json()}</script>
-<script src="app.js"></script>
+<script src="app.js?v={stamp('app.js')}"></script>
 </body>
 </html>
 """
