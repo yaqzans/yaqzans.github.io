@@ -31,10 +31,10 @@ function board(top, dest, when) {
   });
 }
 const IDLE = [
-  () => ['yaqzan\'s network', 'pick a stop', ''],
-  () => ['6 lines from', 'first day, aiub', ''],
-  () => { const s = randomStop(); return [`next: ${DATA.lines[s.lines[0]].name}`, s.name, `${1 + Math.floor(Math.random() * 6)} min`]; },
-  () => { const s = randomStop(); return [`next: ${DATA.lines[s.lines[0]].name}`, s.name, `${1 + Math.floor(Math.random() * 6)} min`]; },
+  () => ['All Lines', 'Good Service', ''],
+  () => ['Pick a stop', 'to ride there', ''],
+  () => { const s = randomStop(); return [`Next: ${DATA.lines[s.lines[0]].name}`, s.name, `${1 + Math.floor(Math.random() * 6)} min`]; },
+  () => { const s = randomStop(); return [`Next: ${DATA.lines[s.lines[0]].name}`, s.name, `${1 + Math.floor(Math.random() * 6)} min`]; },
 ];
 function randomStop() {
   const ids = Object.keys(DATA.stations).filter(s => s !== 'aiub');
@@ -94,7 +94,7 @@ function step(t, dt) {
       t.wait = 1200;
       if (sid === pending) {
         pending = null;
-        board('arrived at', DATA.stations[sid].name, 'now');
+        board('Arrived at', DATA.stations[sid].name, 'Now');
         busyUntil = Date.now() + 6000;
         openStation(sid);
       }
@@ -136,12 +136,12 @@ function send(sid, lineId) {
   $(`.stn[data-id="${sid}"]`).classList.add('on');
   const goal = best.ln.at[sid];
   if (Math.abs(best.s - goal) < 1) {
-    board('arrived at', st.name, 'now');
+    board('Arrived at', st.name, 'Now');
     busyUntil = Date.now() + 6000;
     openStation(sid);
     return;
   }
-  board(`${best.ln.name} line to`, st.name, 'due');
+  board(`${best.ln.name} Line to`, st.name, 'Due');
   busyUntil = Date.now() + 8000;
   best.wait = 0;
   best.target = goal;
@@ -165,7 +165,7 @@ function light(hex) {
 function chips(ids) {
   return ids.map(l => {
     const { color, name } = DATA.lines[l];
-    return `<span style="--c:${esc(color)};color:${light(color) ? '#1d1d1f' : '#fff'}">${esc(name)} line</span>`;
+    return `<span style="--c:${esc(color)};color:${light(color) ? '#1d1d1f' : '#fff'}">${esc(name)} Line</span>`;
   }).join('');
 }
 
@@ -196,7 +196,7 @@ function openStation(sid) {
 
 function openLine(id) {
   const ln = DATA.lines[id];
-  show(`${ln.name} line`, `${ln.stations.length} stops`, [id], 'pick a stop and a train takes you there.',
+  show(`${ln.name} Line`, `${ln.stations.length} stops`, [id], 'Pick a stop and a train takes you there.',
     ln.stations.map(s => goButton(s, id)).join(''));
 }
 
@@ -236,7 +236,7 @@ function mShow(lineId) {
   const ln = DATA.lines[lineId];
   document.querySelectorAll('.m-tab').forEach(b => b.setAttribute('aria-selected', b.dataset.line === lineId));
   route.style.setProperty('--c', ln.color);
-  route.innerHTML = `<h2><i></i>${esc(ln.name)} line</h2><div class="m-strip"><div class="m-train"></div>${
+  route.innerHTML = `<h2><i></i>${esc(ln.name)} Line</h2><div class="m-strip"><div class="m-train"></div>${
     ln.stations.map(sid => {
       const st = DATA.stations[sid];
       const links = st.links.map(([label, url]) =>
@@ -253,7 +253,7 @@ function mShow(lineId) {
   });
   mMoveTrain(route.querySelector('.m-stop'), false);
   if (route.getClientRects().length) {          // only when the phone version is the one showing
-    board(`${ln.name} line`, 'now boarding', '');
+    board(`${ln.name} Line`, 'Now boarding', '');
     busyUntil = Date.now() + 6000;
   }
 }
@@ -273,12 +273,12 @@ function mRide(sid) {
   route.querySelectorAll('.m-stop.open').forEach(n => n.classList.remove('open'));
   if (wasOpen) return;
   const st = DATA.stations[sid];
-  board(`${DATA.lines[mLine].name} line to`, st.name, 'due');
+  board(`${DATA.lines[mLine].name} Line to`, st.name, 'Due');
   busyUntil = Date.now() + 8000;
   mMoveTrain(el);
   setTimeout(() => {
     el.classList.add('open');
-    board('arrived at', st.name, 'now');
+    board('Arrived at', st.name, 'Now');
     mMoveTrain(el, false);   // the stop grew, keep the train on its dot
   }, calm ? 0 : 900);
 }
