@@ -156,19 +156,21 @@ def peel(lid, first):
 # lines: id -> (name, color, route). a route is station ids, (station, dy) for a station
 # passed off-centre, and (x, y) waypoints. the arrow goes on the end.
 L = {
-    "aiub":   ("aiub", "#e9edf5", ["start", "dl1", "dl2", "thesis", "grad"]),
-    "yellow": ("out & about", "#ffb21e", [("start", -24), "poster", "english", "embassy", "undp",
+    "aiub":   ("aiub", "#2e2620", ["start", "dl1", "dl2", "thesis", "grad"]),
+    "yellow": ("out & about", "#c9922b", [("start", -24), "poster", "english", "embassy", "undp",
                                           (NOW_X + 60, LANE["yellow"])]),
-    "cyan":   ("software", "#28b8f0", peel("cyan", "parking") + ["parking", "survey", "ttt", "md", "who"]),
-    "red":    ("machine learning", "#ff4a3d", peel("red", "medease") + ["medease", "oshud", "vehicle", "sarcasm"]),
-    "green":  ("hardware", "#2fd26f", peel("green", "hand") + ["hand", "pm25"]),
-    "blue":   ("papers", "#5b7bff", peel("blue", "blood") + ["blood", "hybrid", "agile", (S["hand"]["x"] - 130, LANE["blue"]),
+    "cyan":   ("software", "#3c8c93", peel("cyan", "parking") + ["parking", "survey", "ttt", "md", "who"]),
+    "red":    ("machine learning", "#b23a2a", peel("red", "medease") + ["medease", "oshud", "vehicle", "sarcasm"]),
+    "green":  ("hardware", "#4f7a37", peel("green", "hand") + ["hand", "pm25"]),
+    "blue":   ("papers", "#2d4a86", peel("blue", "blood") + ["blood", "hybrid", "agile", (S["hand"]["x"] - 130, LANE["blue"]),
                                                              "hand", (S["hand"]["x"] + 70, S["hand"]["y"]), (S["hand"]["x"] + 260, LANE["blue"])]),
 }
 
 W, H = X_END + 200, 1000
-BG, PANEL, INK, SOFT, ZONE = "#0b0d12", "#11141b", "#eef1f7", "#8a93a6", "#151924"
-FONT = "Inter,'Helvetica Neue',Arial,sans-serif"
+BG, PANEL, INK, SOFT, ZONE = "#efe5cf", "#e8dcc0", "#2e2620", "#75664f", "#e6dabd"
+RED_INK = "#a8341f"
+FONT = "'Libre Franklin','Gill Sans','Helvetica Neue',Arial,sans-serif"
+SERIF = "'DM Serif Display',Georgia,'Times New Roman',serif"
 LW = 7      # line width
 GAP = 2.5   # space between lines sharing track
 
@@ -308,10 +310,10 @@ def marker_box(sid):
 def marker(sid):
     x0, y0, x1, y1 = marker_box(sid)
     if len(lines_at(sid)) == 1:
-        return f'<circle class="sh" cx="{S[sid]["x"]}" cy="{S[sid]["y"]}" r="8" fill="{BG}" stroke="#fff" stroke-width="3"/>'
+        return f'<circle class="sh" cx="{S[sid]["x"]}" cy="{S[sid]["y"]}" r="8" fill="{BG}" stroke="{INK}" stroke-width="3"/>'
     w, h = x1 - x0, y1 - y0
     return (f'<rect class="sh" x="{x0:.1f}" y="{y0:.1f}" width="{w:.1f}" height="{h:.1f}" rx="{min(w, h) / 2:.1f}" '
-            f'fill="{BG}" stroke="#fff" stroke-width="3.4"/>')
+            f'fill="{BG}" stroke="{INK}" stroke-width="3.4"/>')
 
 
 def label(sid):
@@ -357,8 +359,8 @@ def badge_box(lid):
 
 def line_badge(lid):
     name, color, cx, cy, w = badge_box(lid)
-    dark = "#0b0d12" if lid in ("aiub", "yellow") else "#fff"
-    return (f'<g class="badge" data-line="{lid}"><rect x="{cx - w / 2:.0f}" y="{cy - 13:.0f}" width="{w:.0f}" height="26" rx="3" fill="{color}"/>'
+    dark = BG
+    return (f'<g class="badge" data-line="{lid}"><rect x="{cx - w / 2:.0f}" y="{cy - 13:.0f}" width="{w:.0f}" height="26" rx="1" fill="{color}"/>'
             f'<text x="{cx:.0f}" y="{cy + 5:.0f}" text-anchor="middle" fill="{dark}" font-family="{FONT}" font-size="14" '
             f'font-weight="700" letter-spacing=".6">{esc(name.upper())}</text></g>')
 
@@ -396,30 +398,59 @@ def zones():
             out.append(f'<rect x="{a}" y="{vy}" width="{b - a}" height="{vh}" fill="{ZONE}"/>')
         out.append(f'<text x="{(a + b) / 2:.0f}" y="{vy + 52}" text-anchor="middle" class="year">{yr}</text>')
     out.append(f'<rect x="{NOW_X:.0f}" y="{vy}" width="{X_END - NOW_X + 400:.0f}" height="{vh}" fill="url(#future)"/>')
-    out.append(f'<line x1="{NOW_X:.0f}" y1="{vy + 70}" x2="{NOW_X:.0f}" y2="{vy + vh}" stroke="#ffb21e" stroke-width="1.5" stroke-dasharray="4 6" opacity=".7"/>')
+    out.append(f'<line x1="{NOW_X:.0f}" y1="{vy + 70}" x2="{NOW_X:.0f}" y2="{vy + vh}" stroke="{RED_INK}" stroke-width="1.5" stroke-dasharray="4 6" opacity=".8"/>')
     out.append(f'<text x="{NOW_X + 8:.0f}" y="{vy + 86}" class="now">NOW</text>')
     return "".join(out)
 
 
 def map_defs():
-    return ('<defs><filter id="glow" x="-5%" y="-30%" width="110%" height="160%"><feGaussianBlur stdDeviation="5"/></filter>'
-            f'<pattern id="future" width="14" height="14" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">'
-            f'<rect width="14" height="14" fill="{BG}" opacity=".35"/><rect width="2" height="14" fill="#fff" opacity=".04"/></pattern></defs>')
+    return ('<defs>'
+            '<filter id="grain" x="0" y="0" width="100%" height="100%">'
+            '<feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" seed="7"/>'
+            '<feColorMatrix values="0 0 0 0 .35  0 0 0 0 .27  0 0 0 0 .17  0 0 0 .55 -.16"/></filter>'
+            '<filter id="blotch" x="0" y="0" width="100%" height="100%">'
+            '<feTurbulence type="fractalNoise" baseFrequency=".006" numOctaves="3" seed="3"/>'
+            '<feColorMatrix values="0 0 0 0 .55  0 0 0 0 .42  0 0 0 0 .22  0 0 0 .5 -.12"/></filter>'
+            '<filter id="ink" x="-2%" y="-2%" width="104%" height="104%">'
+            '<feTurbulence type="fractalNoise" baseFrequency=".04" numOctaves="2" seed="11" result="n"/>'
+            '<feDisplacementMap in="SourceGraphic" in2="n" scale="2.2"/></filter>'
+            '<linearGradient id="crease" x1="0" x2="1"><stop offset="0" stop-color="#000" stop-opacity="0"/>'
+            '<stop offset=".48" stop-color="#5b4630" stop-opacity=".16"/><stop offset=".52" stop-color="#fff" stop-opacity=".35"/>'
+            '<stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>'
+            '<linearGradient id="creaseh" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#000" stop-opacity="0"/>'
+            '<stop offset=".48" stop-color="#5b4630" stop-opacity=".14"/><stop offset=".52" stop-color="#fff" stop-opacity=".3"/>'
+            '<stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>'
+            '<pattern id="future" width="12" height="12" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">'
+            f'<rect width="1.4" height="12" fill="{INK}" opacity=".18"/></pattern></defs>')
+
+
+def paper(vx, vy, vw, vh):
+    """Laid on top of the print: blotchy ageing, grain, and the creases of a poster folded in six."""
+    o = [f'<g class="paper" pointer-events="none">',
+         f'<rect x="{vx}" y="{vy}" width="{vw}" height="{vh}" filter="url(#blotch)"/>',
+         f'<rect x="{vx}" y="{vy}" width="{vw}" height="{vh}" filter="url(#grain)"/>']
+    for i in (1, 2):
+        x = vx + vw * i / 3
+        o.append(f'<rect x="{x - 10:.0f}" y="{vy}" width="20" height="{vh}" fill="url(#crease)"/>')
+    y = vy + vh / 2
+    o.append(f'<rect x="{vx}" y="{y - 10:.0f}" width="{vw}" height="20" fill="url(#creaseh)"/>')
+    o.append('</g>')
+    return "".join(o)
 
 
 def map_svg(interactive=True):
-    style = (f"<style>.lbl{{font:600 23px {FONT};fill:{INK}}}.tag{{font:400 16.5px {FONT};fill:{SOFT}}}"
+    style = (f"<style>.lbl{{font:600 22px {FONT};fill:{INK}}}.tag{{font:italic 400 16px {FONT};fill:{SOFT}}}"
              f".lbl,.tag{{paint-order:stroke;stroke:{BG};stroke-width:5px;stroke-linejoin:round}}"
-             f".year{{font:800 46px {FONT};fill:#232938;letter-spacing:2px}}"
-             f".now{{font:700 17px {FONT};fill:#ffb21e;letter-spacing:3px}}</style>")
+             f".year{{font:400 52px {SERIF};fill:#cdbf9f;letter-spacing:3px}}"
+             f".now{{font:700 16px {FONT};fill:{RED_INK};letter-spacing:4px}}</style>")
     o = [style, map_defs(), f'<rect x="-600" y="-600" width="{W + 1600}" height="{H + 1600}" fill="{BG}"/>', zones()]
-    for lid, (name, color, _) in L.items():     # glow underneath every line
-        o.append(f'<path class="glow" data-line="{lid}" d="{rounded(line_points(lid))}" fill="none" stroke="{color}" '
-                 f'stroke-width="{LW + 8}" opacity=".55" filter="url(#glow)"/>')
+    o.append('<g filter="url(#ink)">')
     for lid, (name, color, _) in L.items():
         o.append(f'<path id="L-{lid}" class="line" data-line="{lid}" d="{rounded(line_points(lid))}" fill="none" '
                  f'stroke="{color}" stroke-width="{LW}" stroke-linejoin="round"/>')
         o.append(f'<g class="cap" data-line="{lid}">{arrow(lid)}</g>')
+    o.append('</g>')
+    for lid in L:
         o.append(line_badge(lid))
     # the future: the aiub line past 'now' is still being built
     gx = S["grad"]["x"]
@@ -429,6 +460,7 @@ def map_svg(interactive=True):
         attrs = (f' class="stn" data-id="{sid}" tabindex="0" role="button" aria-label="{esc(s["name"])}: {esc(s["tag"])}"'
                  if interactive else "")
         o.append(f'<g{attrs}>{marker(sid)}<circle cx="{s["x"]}" cy="{s["y"]}" r="26" fill="transparent"/>{label(sid)}</g>')
+    o.append(paper(*view()))
     return "\n".join(o)
 
 
@@ -465,8 +497,8 @@ def board_html():
 
 def roundel(size=44):
     return (f'<svg class="roundel" viewBox="-30 -30 60 60" width="{size}" height="{size}" aria-hidden="true">'
-            f'<circle r="22" fill="none" stroke="#dc241f" stroke-width="9"/>'
-            f'<rect x="-29" y="-6" width="58" height="12" fill="#0019a8"/></svg>')
+            f'<circle r="22" fill="none" stroke="#a8341f" stroke-width="9"/>'
+            f'<rect x="-29" y="-6" width="58" height="12" fill="#2d4a86"/></svg>')
 
 
 def stamp(path):
@@ -490,7 +522,7 @@ def page():
 <meta name="description" content="everything i have done since 2023, as a metro map. pick a stop and a train takes you there.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Doto:wght@800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Libre+Franklin:ital,wght@0,400;0,600;0,700;1,400&family=DM+Serif+Display&family=Doto:wght@800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css?v={stamp('style.css')}">
 </head>
 <body>
@@ -627,14 +659,15 @@ def teaser():
   <mask id="ledmask"><rect width="{TW}" height="{TH}" fill="url(#dots)"/></mask>
   <filter id="glow" x="-10%" y="-60%" width="120%" height="220%"><feGaussianBlur stdDeviation="2.4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
   <linearGradient id="alu" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#dcdde0"/><stop offset=".5" stop-color="#9ea1a6"/><stop offset="1" stop-color="#d2d4d7"/></linearGradient>
+  <linearGradient id="wood" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5a3a22"/><stop offset=".5" stop-color="#3b2516"/><stop offset="1" stop-color="#53351f"/></linearGradient>
   <linearGradient id="glass" x1="0" y1="0" x2="1" y2="1"><stop offset=".2" stop-color="#fff" stop-opacity="0"/><stop offset=".28" stop-color="#fff" stop-opacity=".05"/><stop offset=".36" stop-color="#fff" stop-opacity="0"/></linearGradient>
   <style>@keyframes b{{50%{{opacity:.1}}}}.blink{{animation:b 1.2s steps(1) infinite}}</style>
 </defs>
-<rect width="{TW}" height="{TH}" rx="10" fill="url(#alu)"/>
+<rect width="{TW}" height="{TH}" rx="6" fill="url(#wood)"/>
 <g transform="translate({pad} {pad})">
   <rect width="{pw}" height="{ph:.0f}" fill="{BG}"/>
-  <svg x="24" y="22" width="52" height="52" viewBox="-30 -30 60 60"><circle r="22" fill="none" stroke="#dc241f" stroke-width="9"/><rect x="-29" y="-6" width="58" height="12" fill="#0019a8"/></svg>
-  <text x="92" y="50" font-family="{FONT}" font-size="34" font-weight="700" fill="{INK}" letter-spacing="-.5">yaqzan's metro</text>
+  <svg x="24" y="22" width="52" height="52" viewBox="-30 -30 60 60"><circle r="22" fill="none" stroke="#a8341f" stroke-width="9"/><rect x="-29" y="-6" width="58" height="12" fill="#2d4a86"/></svg>
+  <text x="92" y="50" font-family="{SERIF}" font-size="40" fill="{INK}">yaqzan's metro</text>
   <text x="93" y="76" font-family="{FONT}" font-size="17" fill="{SOFT}">everything since 2023, left to right. click the map to ride it.</text>
   <g transform="translate({bx} 16)">
     <rect width="{bw}" height="64" rx="3" fill="#0b0b0b" stroke="#333" stroke-width="3"/>
