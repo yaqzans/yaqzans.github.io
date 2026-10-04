@@ -71,7 +71,7 @@ S = {
               "with a bot that has a difficulty slider.",
               [("Play", "https://yaqzans.github.io/TicTacToeInfinity/"),
                ("Repo", "https://github.com/yaqzans/TicTacToeInfinity")]),
-    "survey": st("Survey Platform", "NeedSurveyResponses", 920, 760, "br",
+    "survey": st("Survey Platform", "PHP + MySQL", 920, 760, "br",
                  "NeedSurveyResponses: answer other people's surveys to earn credits, then spend credits to publish "
                  "your own. PHP, MySQL and JavaScript, with separate user and admin views."),
 
@@ -79,7 +79,7 @@ S = {
     "prod": st("Productivity Manager", "C# + MS SQL", 600, 760, "b",
                "Notes, reminders and a timer in one C# desktop app, with logins and an MS SQL database underneath.",
                [("Repo", "https://github.com/yaqzans/Productivity-Manager")]),
-    "sarcasm": st("Sarcasm Detection", "R, Bag of Words vs TF-IDF", 1240, 760, "t",
+    "sarcasm": st("Sarcasm Detection", "Bag of Words vs TF-IDF", 1360, 880, "t",
                   "Can a classifier tell when a tweet is sarcastic? Bag of Words against TF-IDF across four "
                   "classifiers, in R.", [("Repo", "https://github.com/yaqzans/ids-sarcasm-detection")]),
 
@@ -114,7 +114,8 @@ L = {
     "py":     ("Python", "#6b7d2a", ["md", "oshud", "medease", "vehicle", "hand", "who", (1560, 430)]),
     "js":     ("JavaScript", "#d6a21e", ["ttt", "who", "pm25", "survey", (920, 860)]),
     "cpp":    ("C++", "#7a3f22", ["parking", "hand", "pm25"]),
-    "data":   ("Data", "#2f7f8f", ["prod", "survey", "sarcasm", (1560, 760)]),
+    "sql":    ("SQL", "#2f7f8f", ["prod", "survey", (1100, 760)]),
+    "r":      ("R", "#8a5a83", ["sarcasm", (1560, 880)]),
     "papers": ("Papers", "#233a6b", ["blood", "agile", "hybrid", "hand", (1020, 310)]),
     "out":    ("Out & About", "#e8731c", ["poster", "english", "embassy", "undp", (600, 900)]),
 }
