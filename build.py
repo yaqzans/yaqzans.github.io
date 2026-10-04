@@ -427,7 +427,7 @@ def page():
   <aside class="column">
     <h1>Yaqzan’s</h1>
     <div class="stripes">{stripes()}</div>
-    <p class="key">{KEY} Click a stop to open it.</p>
+    <p class="key">{KEY} Click a stop to visit it.</p>
     <nav class="legend" aria-label="Lines">{legend}</nav>
     {exits_html("exits")}
   </aside>
@@ -452,7 +452,7 @@ def page():
 <!-- phone version: a line strip map, like the one above the doors in a train -->
 <div class="m">
   <header class="m-head"><h1>Yaqzan’s</h1><div class="stripes">{stripes()}</div></header>
-  <p class="m-intro">{KEY} Pick a line, then tap a stop to open it.</p>
+  <p class="m-intro">{KEY} Pick a line, then tap a stop to visit it.</p>
   <nav class="m-tabs" role="tablist">{m_tabs}</nav>
   <section class="m-route" id="m-route" aria-live="polite"></section>
   {exits_html("m-exits")}
