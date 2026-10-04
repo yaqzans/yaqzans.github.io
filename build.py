@@ -402,8 +402,8 @@ def stamp(path):
         return hashlib.sha1(f.read()).hexdigest()[:8]
 
 
-KEY = ("Each line is a language or a kind of work. A stop sits on every line it uses, so where lines cross, "
-       "that project used both.")
+KEY = ("A map of everything I’ve made. Stops are projects and papers. Lines are the languages behind them. "
+       "Where two meet, the project used both.")
 
 
 def page():
@@ -427,10 +427,9 @@ def page():
   <aside class="column">
     <h1>Yaqzan’s</h1>
     <div class="stripes">{stripes()}</div>
-    <p class="key">{KEY}</p>
+    <p class="key">{KEY} Click a stop to open it.</p>
     <nav class="legend" aria-label="Lines">{legend}</nav>
     {exits_html("exits")}
-    <p class="hint">Click any stop to ride there.</p>
   </aside>
 
   <main class="mapside"><div class="mapframe">
@@ -453,7 +452,7 @@ def page():
 <!-- phone version: a line strip map, like the one above the doors in a train -->
 <div class="m">
   <header class="m-head"><h1>Yaqzan’s</h1><div class="stripes">{stripes()}</div></header>
-  <p class="m-intro">{KEY} Pick a line, then tap a stop.</p>
+  <p class="m-intro">{KEY} Pick a line, then tap a stop to open it.</p>
   <nav class="m-tabs" role="tablist">{m_tabs}</nav>
   <section class="m-route" id="m-route" aria-live="polite"></section>
   {exits_html("m-exits")}
@@ -501,8 +500,8 @@ def teaser():
   <rect width="{TW}" height="{TH}" fill="{BG}"/>
   <rect width="{TW}" height="{band}" fill="#111"/>
   <text x="44" y="84" font-family="{FONT}" font-size="64" font-weight="800" fill="#fff" letter-spacing="-2">Yaqzan’s</text>
-  <text x="{TW - 44}" y="72" text-anchor="end" font-family="{FONT}" font-size="22" font-weight="700" fill="#e8731c">Projects, papers and the rest</text>
-  <text x="{TW - 44}" y="98" text-anchor="end" font-family="{FONT}" font-size="17" fill="#bdb3a2">Lines are languages. Where they cross, a project used both.</text>
+  <text x="{TW - 44}" y="72" text-anchor="end" font-family="{FONT}" font-size="22" font-weight="700" fill="#e8731c">A map of everything I’ve made</text>
+  <text x="{TW - 44}" y="98" text-anchor="end" font-family="{FONT}" font-size="17" fill="#bdb3a2">Stops are projects and papers. Lines are the languages behind them.</text>
   {bars}
   <svg x="{fb + 20}" y="{band + stripe + 30}" width="{mw:.0f}" height="{mh:.0f}" viewBox="{vx} {vy} {vw} {vh}">{body}</svg>
   <path d="M{fb / 2},{band + stripe} V{TH - fb / 2} H{TW - fb / 2} V{band + stripe}" fill="none" stroke="#3d2617" stroke-width="{fb}"/>
