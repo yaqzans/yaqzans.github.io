@@ -353,17 +353,70 @@ def view():
     return (round(min(xs) - 30), round(y0), round(max(xs) - min(xs) + 60), round(max(ys) - y0 + 30))
 
 
-def rrect(x0, y0, x1, y1, r):
-    return (f"M{x0 + r},{y0} H{x1 - r} Q{x1},{y0} {x1},{y0 + r} V{y1 - r} Q{x1},{y1} {x1 - r},{y1} "
-            f"H{x0 + r} Q{x0},{y1} {x0},{y1 - r} V{y0 + r} Q{x0},{y0} {x0 + r},{y0} Z")
+def wobble(pts, amp, seed, step=34):
+    """Walk a closed outline and push every point in or out a little, so edges look drawn, not ruled."""
+    out, t = [], 0.0
+    n = len(pts)
+    for i in range(n):
+        (x1, y1), (x2, y2) = pts[i], pts[(i + 1) % n]
+        seg = math.dist((x1, y1), (x2, y2))
+        k = max(1, int(seg // step))
+        nx, ny = (y2 - y1) / seg, -(x2 - x1) / seg
+        for j in range(k):
+            f = j / k
+            off = amp * (math.sin(t * .021 + seed) * .6 + math.sin(t * .057 + seed * 2.3) * .3
+                         + math.sin(t * .13 + seed * 5.1) * .15)
+            out.append((x1 + (x2 - x1) * f + nx * off, y1 + (y2 - y1) * f + ny * off))
+            t += seg / k
+    return out
+
+
+def smooth(pts):
+    """Closed Catmull-Rom curve through the points."""
+    n = len(pts)
+    d = f"M{pts[0][0]:.1f},{pts[0][1]:.1f}"
+    for i in range(n):
+        p0, p1, p2, p3 = pts[i - 1], pts[i], pts[(i + 1) % n], pts[(i + 2) % n]
+        c1 = (p1[0] + (p2[0] - p0[0]) / 6, p1[1] + (p2[1] - p0[1]) / 6)
+        c2 = (p2[0] - (p3[0] - p1[0]) / 6, p2[1] - (p3[1] - p1[1]) / 6)
+        d += f" C{c1[0]:.1f},{c1[1]:.1f} {c2[0]:.1f},{c2[1]:.1f} {p2[0]:.1f},{p2[1]:.1f}"
+    return d + "Z"
+
+
+def blob(cx, cy, rx, ry, amp, seed, n=40):
+    pts = [(cx + rx * math.cos(2 * math.pi * i / n), cy + ry * math.sin(2 * math.pi * i / n)) for i in range(n)]
+    return smooth(wobble(pts, amp, seed, step=9999)) if False else smooth(
+        [(x + amp * math.sin(i * 1.7 + seed) * math.cos(i * .6 + seed),
+          y + amp * math.cos(i * 1.3 + seed * 2) * math.sin(i * .9 + seed)) for i, (x, y) in enumerate(pts)])
+
+
+# the mainland: everything except the top-left corner, which is open sea with the Data island in it
+MAINLAND = smooth(wobble([(610, 12), (900, -14), (1240, 18), (1590, -8), (1770, 70), (1795, 300), (1745, 520),
+                          (1800, 760), (1730, 1010), (1420, 1045), (1150, 1000), (880, 1050), (590, 1012),
+                          (300, 1045), (30, 1005), (-25, 770), (12, 530), (-20, 320), (110, 238), (420, 252),
+                          (590, 200)], 9, 1.3, step=70))
+DATA_ISLAND = blob(305, 115, 285, 92, 14, 2.2)
+RIVER = ("M330,500 C420,470 520,450 640,485 S860,540 1010,500 S1180,445 1320,480 "
+         "S1560,530 1900,470")
+PARKS = [blob(300, 760, 120, 70, 12, 4.4), blob(1530, 580, 70, 40, 8, 6.1), blob(1000, 170, 50, 60, 8, 3.3)]
+SEA, LAND, PARK = "#b9cdc8", BG, "#cfd7b3"
 
 
 def zones():
-    """Water everywhere, the fields as land on top of it, each with its name in big faint letters."""
-    o = [f'<rect x="-600" y="-600" width="{W + 1600}" height="{H + 1600}" fill="{WATER}"/>']
+    """Sea, the mainland and the Data island, parks, the river, and soft district borders with names."""
+    o = [f'<rect x="-600" y="-600" width="{W + 1600}" height="{H + 1600}" fill="{SEA}"/>',
+         f'<path d="{MAINLAND}" fill="{LAND}"/>', f'<path d="{DATA_ISLAND}" fill="{LAND}"/>']
+    o += [f'<path d="{d}" fill="{PARK}"/>' for d in PARKS]
+    o.append(f'<path d="{RIVER}" fill="none" stroke="{SEA}" stroke-width="58" stroke-linecap="round"/>')
+    o.append(f'<path d="M150,520 C230,515 290,505 340,500" fill="none" stroke="{SEA}" stroke-width="14" stroke-linecap="round"/>')
+    for i, (name, x0, y0, x1, y1, corner) in enumerate(REGIONS):
+        if name == "Data":
+            continue
+        c = min(x1 - x0, y1 - y0) * .32          # big soft corners, then a slow wobble: no boxes
+        outline = [(x0 + c, y0), (x1 - c, y0), (x1, y0 + c), (x1, y1 - c), (x1 - c, y1), (x0 + c, y1), (x0, y1 - c), (x0, y0 + c)]
+        d = smooth(wobble(outline, 16, 3 + i * 1.7, step=75))
+        o.append(f'<path d="{d}" fill="none" stroke="#b7a98c" stroke-width="2.4" stroke-dasharray="2 9" stroke-linecap="round"/>')
     for name, x0, y0, x1, y1, corner in REGIONS:
-        o.append(f'<path class="land" d="{rrect(x0, y0, x1, y1, LAND_R)}" fill="{BG}"/>')
-    for name, x0, y0, x1, y1, corner in REGIONS:   # district name in a corner, like on a city map
         x, anchor = (x0 + 26, "start") if corner[1] == "l" else (x1 - 26, "end")
         y = y0 + 40 if corner[0] == "t" else y1 - 18
         o.append(f'<text x="{x}" y="{y}" text-anchor="{anchor}" class="district">{esc(name.upper())}</text>')
@@ -371,14 +424,15 @@ def zones():
 
 
 def bridges():
-    """Where a line runs over water, draw it on a bridge deck: a pale band with dark edges, clipped to the water."""
-    water = f"M-600,-600 H{W + 1000} V{H + 1000} H-600 Z " + " ".join(rrect(x0, y0, x1, y1, LAND_R)
-                                                                      for _, x0, y0, x1, y1, _c in REGIONS)
-    o = [f'<clipPath id="wateronly"><path d="{water}" clip-rule="evenodd"/></clipPath><g clip-path="url(#wateronly)">']
+    """Where a line runs over water, it rides on a bridge deck."""
+    o = [f'<mask id="water" maskUnits="userSpaceOnUse" x="-600" y="-600" width="{W + 1600}" height="{H + 1600}">'
+         f'<rect x="-600" y="-600" width="{W + 1600}" height="{H + 1600}" fill="#fff"/>'
+         f'<path d="{MAINLAND}" fill="#000"/><path d="{DATA_ISLAND}" fill="#000"/>'
+         f'<path d="{RIVER}" fill="none" stroke="#fff" stroke-width="58"/></mask><g mask="url(#water)">']
     for lid in L:
         d = rounded(line_points(lid))
         o.append(f'<path d="{d}" fill="none" stroke="#3d2617" stroke-width="{LW + 16}"/>')
-        o.append(f'<path d="{d}" fill="none" stroke="{BG}" stroke-width="{LW + 9}"/>')
+        o.append(f'<path d="{d}" fill="none" stroke="{LAND}" stroke-width="{LW + 9}"/>')
     o.append("</g>")
     return "".join(o)
 
